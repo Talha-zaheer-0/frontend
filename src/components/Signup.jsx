@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import './Signup.css'; // ✅ Import the custom CSS file
+import './Signup.css';
 
 function Signup({ setAppState }) {
   const [email, setEmail] = useState('');
@@ -13,16 +13,21 @@ function Signup({ setAppState }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/auth/signup', {
+      await axios.post('/api/auth/signup', {
         email,
         password,
         role,
-        adminAccess: role === 'admin' ? adminAccess : undefined,
+        adminAccess: role === 'admin' ? adminAccess : '',
       });
-      setSuccess('Signup successful! Please check your email to verify.');
+      setSuccess('Signup successful! Redirecting to login...');
       setError('');
+      setTimeout(() => setAppState('login'), 2000); // Redirect to login
     } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed');
+      if (err.response?.status === 429) {
+        setError('Too many requests. Please wait and try again later.');
+      } else {
+        setError(err.response?.data?.message || 'Signup failed');
+      }
       setSuccess('');
     }
   };
@@ -35,10 +40,22 @@ function Signup({ setAppState }) {
         {error && <div className="alert error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <label>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+          />
 
           <label>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+          />
 
           <label>Role</label>
           <select value={role} onChange={(e) => setRole(e.target.value)}>

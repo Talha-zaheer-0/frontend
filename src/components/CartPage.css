@@ -1,0 +1,119 @@
+.cart-container {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #f7f9ff, #ffffff);
+  min-height: 100vh;
+  padding: clamp(1.5rem, 5vw, 2.5rem) clamp(1rem, 4vw, 2rem);
+}
+
+.cart {
+  text-align: center;
+}
+
+.cart h2 {
+  font-size: clamp(1.5rem, 5vw, 1.8rem);
+  margin-bottom: 1.25rem;
+  color: #333;
+}
+
+.cart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+.cart-item {
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.cart-item img {
+  width: 6rem;
+  height: 6rem;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.cart-item-details {
+  text-align: left;
+  flex: 1;
+}
+
+.cart-item-details h3 {
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  color: #333;
+  margin: 0 0 0.5rem;
+}
+
+.cart-item-details p {
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  color: #007bff;
+  margin: 0.3rem 0;
+}
+
+.loader {
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  color: #333;
+  text-align: center;
+  margin: 1.25rem 0;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 1023px) {
+  .cart-grid {
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  }
+
+  .cart-item img {
+    width: 5rem;
+    height: 5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .cart-container {
+    padding: 1rem;
+  }
+
+  .cart h2 {
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+  }
+
+  .cart-item {
+    padding: 1rem;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .cart-item-details {
+    text-align: center;
+  }
+
+  .cart-item-details h3 {
+    font-size: clamp(0.9rem, 3vw, 1rem);
+  }
+
+  .cart-item-details p {
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+  }
+}
+
+@media (max-width: 479px) {
+  .cart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-item img {
+    width: 4rem;
+    height: 4rem;
+  }
+}
