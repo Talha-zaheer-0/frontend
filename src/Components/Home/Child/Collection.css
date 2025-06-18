@@ -1,0 +1,10 @@
+.add-card-custom {
+  border-radius: 6px;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.add-card-custom:hover {
+  transform: scale(1.03);
+  background-color: #e0e0e0;
+}

@@ -1,0 +1,55 @@
+.about-page {
+  padding: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+.section-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-weight: bold;
+  font-size: 1.8rem;
+}
+.section-title span {
+  color: #9C4215;
+  border-bottom: 2px solid #9C4215;
+  padding-bottom: 4px;
+}
+.about-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+  width: 80%;
+  margin-left: auto;
+}
+.why-choose-us {
+  margin-top: 3rem;
+}
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.feature-box {
+  flex: 1;
+  min-width: 250px;
+  border: 1px solid #ddd;
+  padding: 1.5rem;
+  border-radius: 6px;
+  background-color: #F9F9F9;
+}
+.about-image-wrapper {
+  flex: 1;
+  min-width: 280px;
+  max-width: 400px;
+}
+.about-image {
+  width: 100%;
+  border-radius: 8px;
+}
+.about-text {
+  flex: 2;
+  min-width: 300px;
+  font-size: 16px;
+  line-height: 1.6;
+}
