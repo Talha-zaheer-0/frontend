@@ -1,7 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Footer.css";
+import axios from 'axios';
 
 const Footer = () => {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:5000/api/email/quote', { email });
+      setMessage(response.data.msg);
+      setEmail('');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      setMessage(error.response?.data?.msg || 'An error occurred');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
   return (
     <footer className="stylish-footer">
       <div className="footer-content">
@@ -31,11 +48,18 @@ const Footer = () => {
         </div>
 
         <div className="footer-subscribe">
-          <h3>Subscribe</h3>
-          <form>
-            <input type="email" placeholder="Enter your email" />
-            <button type="submit">Join</button>
+          <h3>Get a Quote</h3>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="email"
+              placeholder="Enter your email for a quote"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <button type="submit">Send</button>
           </form>
+          {message && <p className="message">{message}</p>}
         </div>
       </div>
 
@@ -47,5 +71,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
-

@@ -1,41 +1,37 @@
 .stylish-footer {
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  color: #f8fafc;
-  padding: 60px 30px 30px;
-  font-family: 'Segoe UI', sans-serif;
-  position: relative;
-  overflow: hidden;
-  border-top-left-radius: 40px;
-  border-top-right-radius: 40px;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+  background: #1a1a1a;
+  color: #fff;
+  padding: 40px 20px;
+  font-family: Arial, sans-serif;
 }
 
 .footer-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   max-width: 1200px;
-  margin: auto;
+  margin: 0 auto;
+}
+
+.footer-logo, .footer-menu, .footer-social, .footer-subscribe {
+  flex: 1;
+  min-width: 200px;
+  margin: 20px;
 }
 
 .footer-logo h2 {
   font-size: 24px;
   margin-bottom: 10px;
-  color: #38bdf8;
 }
 
 .footer-logo p {
   font-size: 14px;
-  line-height: 1.5;
-  color: #cbd5e1;
+  color: #aaa;
 }
 
-.footer-menu h3,
-.footer-social h3,
-.footer-subscribe h3 {
+.footer-menu h3, .footer-social h3, .footer-subscribe h3 {
   font-size: 18px;
   margin-bottom: 15px;
-  color: #f1f5f9;
 }
 
 .footer-menu ul {
@@ -48,63 +44,59 @@
 }
 
 .footer-menu ul li a {
+  color: #aaa;
   text-decoration: none;
-  color: #94a3b8;
-  transition: color 0.3s ease;
 }
 
 .footer-menu ul li a:hover {
-  color: #38bdf8;
+  color: #fff;
 }
 
-.icons a {
-  font-size: 18px;
-  color: #94a3b8;
-  margin-right: 12px;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
-
-.icons a:hover {
-  color: #38bdf8;
-  transform: scale(1.2);
+.footer-social .icons a {
+  color: #fff;
+  margin-right: 15px;
+  font-size: 20px;
 }
 
 .footer-subscribe form {
   display: flex;
-  flex-direction: row;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .footer-subscribe input {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
   border: none;
-  font-size: 14px;
+  border-radius: 5px;
 }
 
 .footer-subscribe button {
-  padding: 10px 18px;
-  background: #38bdf8;
+  padding: 10px;
+  background: #ff6a00;
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  color: white;
+  border-radius: 5px;
   cursor: pointer;
-  font-weight: 600;
-  transition: background 0.3s ease;
 }
 
 .footer-subscribe button:hover {
-  background: #0ea5e9;
+  background: #e55a00;
+}
+
+.footer-subscribe .message {
+  color: #00ff00;
+  font-size: 14px;
+  margin-top: 10px;
 }
 
 .footer-bottom {
   text-align: center;
-  margin-top: 40px;
-  font-size: 13px;
-  color: #778191;
-  border-top: 1px solid #334155;
   padding-top: 20px;
+  border-top: 1px solid #333;
+  margin-top: 20px;
 }
 
+.footer-bottom p {
+  font-size: 14px;
+  color: #aaa;
+}

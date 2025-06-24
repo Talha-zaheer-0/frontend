@@ -44,19 +44,7 @@ const AdminPanel = () => {
         <div className="mb-5"></div>
         <Sidebar />
       </div>
-      <div className="flex-grow-1">
-        <div className="d-flex justify-content-end align-items-center p-3 border-bottom bg-light">
-          <button
-            className="btn btn-dark rounded-pill px-4"
-            onClick={() => {
-              console.log('Logging out, clearing token');
-              localStorage.removeItem('token');
-              navigate('/login', { replace: true });
-            }}
-          >
-            Logout
-          </button>
-        </div>
+      <div className="flex-grow-1"> 
         <div className="p-4 text-dark">
           <Outlet />
         </div>
