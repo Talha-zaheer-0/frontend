@@ -12,6 +12,7 @@ import AdminPanel from './Components/Home/Admin/Admin';
 import AddItems from './Components/Home/Admin/AddItems';
 import Listitem from './Components/Home/Admin/Listitems';
 import Orders from './Components/Home/Admin/Orders';
+import BlockAnyUser from './Components/Home/Admin/Blockuser';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function MainRoutes() {
           <Route path="add-items" element={<AddItems />} />
           <Route path="list-items" element={<Listitem />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="blockusers" element={<BlockAnyUser/>}/>
         </Route>
       </Routes>
       {!hideNavAndFooter && <Footer />}
