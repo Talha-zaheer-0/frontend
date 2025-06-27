@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
+import axios from 'axios';
 
 const Login = () => {
   const { login } = useContext(AuthContext);
@@ -34,6 +35,8 @@ const Login = () => {
     if (Object.keys(newErrors).length === 0) {
       try {
         const user = await login(formData.email, formData.password);
+                // Save token to localStorage
+       
         if (user.isAdmin) {
           navigate('/admin');
         } else {

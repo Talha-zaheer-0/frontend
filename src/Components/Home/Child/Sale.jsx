@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Sale.module.css';
+import { useNavigate } from 'react-router-dom';
 
 const saleItems = [
   { id: 1, name: "Laptop", price: 999.99, salePrice: 799.99, image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQy-jp37hldpLwHTk8y5lMzGqfDWjpPdtF_KNCPKyhfniIeAT5yYzRuvaiexJjNjAMdgDc&usqp=CAU", color: "142, 249, 252" },
@@ -14,13 +15,15 @@ const saleItems = [
 ];
 
 function Menu() {
+
+  const navigate = useNavigate();
   return (
     <div className="container my-5">
       <h2 className="text-center mb-4">Sale Items</h2>
       <div className={styles.wrapper}>
         <div className={styles.inner} style={{ "--quantity": saleItems.length }}>
           {saleItems.map((item, index) => (
-            <div className={styles.card} style={{ "--index": index, "--color-card": item.color }} key={item.id}>
+            <div className={styles.card} onClick={() => navigate(`/product/${item.id}`)} style={{ "--index": index, "--color-card": item.color }} key={item.id}>
               <img src={item.image} className={styles.img} alt={item.name} />
               <div className={styles.cardBody}>
                 <h5 className="card-title">{item.name}</h5>

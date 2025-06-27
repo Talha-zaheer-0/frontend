@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./Footer.css";
 import axios from 'axios';
+import backgroundImage from '../../../assets/footer.jpg'; // Adjust path as needed
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="stylish-footer">
+    <footer className="footer-section stylish-footer" style={{ backgroundImage: `url(${backgroundImage})` }}>
       <div className="footer-content">
         <div className="footer-logo">
           <h2>Forever Buy</h2>
@@ -52,19 +53,20 @@ const Footer = () => {
           <form onSubmit={handleSubmit}>
             <input
               type="email"
-              placeholder="Enter your email for a quote"
+              placeholder="Your email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <button type="submit">Send</button>
+            <button type="submit" className="animated-button">Submit</button>
           </form>
-          {message && <p className="message">{message}</p>}
+          {message && <p className="error-message">{message}</p>}
         </div>
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} Forever Buy. Built by Team Forever.</p>
+        <p>© {new Date().getFullYear()} Forever Buy | Built by Team Forever</p>
       </div>
     </footer>
   );

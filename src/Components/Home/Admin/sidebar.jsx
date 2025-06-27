@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlus, FaClipboardList, FaBoxOpen } from 'react-icons/fa';
+import { FaPlus, FaClipboardList, FaBoxOpen,FaUserCircle } from 'react-icons/fa';
+
 
 const Sidebar = () => {
   return (
@@ -14,6 +15,9 @@ const Sidebar = () => {
         </Link>
         <Link to="/admin/orders" className="btn btn-outline-dark d-flex align-items-center gap-2">
           <FaBoxOpen /> Orders
+        </Link>
+        <Link to="/admin/blockusers" className="btn btn-outline-dark d-flex align-items-center gap-2">
+          <FaUserCircle /> Block user
         </Link>
       </div>
     </div>
