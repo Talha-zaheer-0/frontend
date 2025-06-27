@@ -1,79 +1,117 @@
-/* From Uiverse.io by Praashoo7 */ 
-/* Teenage Engineering [EP-133 K.O. II] - Buttons */
-
 .main {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  row-gap: 1.25em;
 }
 
 .buttons {
   display: flex;
-  flex-direction: column;
-  row-gap: 1.5em;
+  gap: 10px;
 }
+
 .button_pair {
   display: flex;
-  column-gap: 1.5em;
-}
-.button_pair1 {
-  display: flex;
-  flex-direction: column;
-  row-gap: 0.9em;
+  align-items: center;
 }
 
 .btn {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2em;
-  height: 2em;
-  background-color: #171717;
-  border-radius: 5px;
 }
-
- 
- 
 
 .button3 {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  width: 7.7em;
-  height: 2.8em;
-  border-radius: 10px;
+  background: #ff6a00;
+  color: #fff;
   border: none;
-  outline: none;
-  background-color: #d42a02;
-  box-shadow: rgba(0, 0, 0, 0.377) 10px 10px 8px, #fb702c 2px 2px 10px 0px inset,
-    #d42a02 -4px -4px 1px 0px inset;
+  padding: 8px 16px;
+  border-radius: 20px;
   cursor: pointer;
-  font-family: Montserrat;
-  transition: 0.1s ease-in-out;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-flex;
+  alignItems: center;
 }
- 
+
+.button3:hover {
+  background: #e55a00;
+}
 
 .button_text {
+  font-size: 14px;
+}
+
+.profile-circle {
+  text-decoration: none;
+}
+
+/* Ensure cart button aligns with other buttons */
+.navbar .btn-outline-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.navbar .btn-outline-dark:hover {
+  background: #f8f9fa;
+}
+
+.navbar .btn-outline-dark .bi-bag {
+  margin-right: 4px;
+}
+
+/* From Uiverse.io by Julian956 */ 
+.btn-cart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  border: none;
+  background-color: transparent;
+  position: relative;
+}
+
+.btn-cart::after {
+  content: attr(data-quantity);
+  width: fit-content;
+  height: fit-content;
+  position: absolute;
+  font-size: 15px;
   color: white;
-  padding-top: 0.9em;
-  letter-spacing: 0.075em;
-  font-size: 0.85em;
-  transition: 0.1s ease-in-out;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  opacity: 0;
+  visibility: hidden;
+  transition: .2s linear;
+  top: 115%;
 }
 
-.text {
-  font-family: Montserrat;
-  text-align: center;
-  font-size: 0.65em;
+.icon-cart {
+  width: 24.38px;
+  height: 30.52px;
+  transition: .2s linear;
 }
 
- 
-.button3:active {
-  box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px, inset 0.5px 0.5px 4px #000000,
-    #d42a02 -3.2px -3.2px 8px 0px inset;
+.icon-cart path {
+  fill: rgb(240, 8, 8);
+  transition: .2s linear;
 }
-.button3:active .button_text {
-  transform: translateY(0.5px);
-} 
+
+.btn-cart:hover > .icon-cart {
+  transform: scale(1.2);
+}
+
+.btn-cart:hover > .icon-cart path {
+  fill: rgb(186, 34, 233);
+}
+
+.btn-cart:hover::after {
+  visibility: visible;
+  opacity: 1;
+  top: 105%;
+}
+
+.quantity {
+  display: none;
+}

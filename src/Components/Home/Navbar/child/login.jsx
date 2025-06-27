@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState, useContext } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../../AuthContext';
 
 const Login = () => {
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -23,7 +24,6 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Basic validation
     let newErrors = {};
     if (!formData.email) newErrors.email = "Email is required";
     if (!formData.password) newErrors.password = "Password is required";
@@ -33,18 +33,8 @@ const Login = () => {
 
     if (Object.keys(newErrors).length === 0) {
       try {
-        const response = await axios.post('http://localhost:5000/api/auth/login', {
-          email: formData.email,
-          password: formData.password
-        });
-
-        console.log("✅ Login successful:", response.data);
-
-        // Save token to localStorage
-        localStorage.setItem('token', response.data.token);
-
-        // Check if user is admin and redirect accordingly
-        if (response.data.user.isAdmin) {
+        const user = await login(formData.email, formData.password);
+        if (user.isAdmin) {
           navigate('/admin');
         } else {
           navigate('/');
@@ -93,6 +83,10 @@ const Login = () => {
 
         <button type="submit" className="btn btn-dark w-100 rounded-pill">Login</button>
       </form>
+
+      <p className="text-center mt-3">
+        Don't have an account? <Link to="/signup">Sign up here</Link>
+      </p>
     </div>
   );
 };
