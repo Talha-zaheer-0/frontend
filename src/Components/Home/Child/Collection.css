@@ -8,3 +8,10 @@
   transform: scale(1.03);
   background-color: #e0e0e0;
 }
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+

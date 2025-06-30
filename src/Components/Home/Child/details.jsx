@@ -1,101 +1,171 @@
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import './detail.css';
-// import 'bootstrap-icons/font/bootstrap-icons.css';
 
- const DetailedPro = () => {
-  const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
+const DetailedPro = () => {
+  const { id: productId } = useParams();
+  const [product, setProduct] = useState({});
   const [mainImage, setMainImage] = useState('');
-  const { id } = useParams();
+  const [reviews, setReviews] = useState([]);
+  const [comment, setComment] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const popImage = (img) => {
-    setMainImage(img);
-  };
-
-  const renderStars = (rating) => {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
-    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-
-    return (
-      <>
-        {[...Array(fullStars)].map((_, i) => (
-          <i key={`full-${i}`} className="bi bi-star-fill text-warning"></i>
-        ))}
-        {halfStar && <i className="bi bi-star-half text-warning"></i>}
-        {[...Array(emptyStars)].map((_, i) => (
-          <i key={`empty-${i}`} className="bi bi-star text-warning"></i>
-        ))}
-      </>
-    );
-  };
-
+  // Check login status
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/api/products/${id}`);
-        setProduct(response.data);
-        setMainImage(response.data.images[0]);
-      } catch (error) {
-        console.error('Error fetching product details:', error);
-      }
-    };
-    fetchProduct();
-  }, [id]);
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []);
 
-  if (!product) return <div className="loading">Loading...</div>;
+  // Fetch product and reviews
+  useEffect(() => {
+    if (!productId) return;
+
+    axios.get(`http://localhost:5000/api/products/${productId}`)
+      .then(res => {
+        setProduct(res.data);
+        setMainImage(res.data.images?.[0] || '');
+      })
+      .catch(err => console.log('Error loading product:', err));
+
+    axios.get(`http://localhost:5000/api/reviews/${productId}`)
+      .then(res => setReviews(res.data))
+      .catch(err => console.log('Error loading reviews:', err));
+  }, [productId]);
+
+  // Submit review
+  const handleSubmitReview = async () => {
+    const token = localStorage.getItem('token');
+    if (!comment.trim() || !token) return;
+
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/reviews/${productId}`,
+        { comment },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setReviews([res.data, ...reviews]);
+      setComment('');
+    } catch (err) {
+      console.log('Error posting review:', err);
+    }
+  };
+
+  // Like review
+  const handleLike = async (reviewId) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/reviews/${reviewId}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setReviews(reviews.map(r => r._id === reviewId ? res.data : r));
+    } catch (err) {
+      console.log('Error liking review:', err);
+    }
+  };
+
+  // Render star rating (rounded)
+  const renderStars = (rating) => {
+    const rounded = Math.round(rating || 0);
+    return '★'.repeat(rounded) + '☆'.repeat(5 - rounded);
+  };
 
   return (
-    <div className="product-detail-wrapper container">
-      <div className="product-detail d-flex flex-row gap-4">
-        {/* Left: Thumbnail Images */}
-        <div className="left-thumbs d-flex flex-column gap-2">
-          {product.images.map((img, i) => (
+    <div className="container my-4">
+      <div className="row">
+        {/* Image Sidebar */}
+        <div className="col-md-2 d-flex flex-column gap-2">
+          {product.images?.map((img, i) => (
             <img
               key={i}
               src={img}
               alt={`thumb-${i}`}
-              className={`img-thumbnail thumb-img ${mainImage === img ? 'active' : ''}`}
-              onClick={() => popImage(img)}
+              className={`img-thumbnail ${mainImage === img ? 'border-primary' : ''}`}
+              style={{ cursor: 'pointer' }}
+              onClick={() => setMainImage(img)}
             />
           ))}
         </div>
 
-        {/* Middle: Main Image */}
-        <div className="main-image-section">
-          <img src={mainImage} alt="Main Product" className="main-image-display img-fluid" />
+        {/* Main Image */}
+        <div className="col-md-5">
+          <img
+            src={mainImage}
+            alt="Selected"
+            className="img-fluid rounded shadow-sm"
+            style={{ maxHeight: '400px', objectFit: 'contain' }}
+          />
         </div>
 
-        {/* Right: Product Info */}
-        <div className="right-info">
-          <h2 className="product-title">{product.name}</h2>
+        {/* Product Info */}
+        <div className="col-md-5">
+          <h4>Name</h4>
+          <p className="">{product.name}</p>
+          <h4>Description</h4>
+          <p className="text-muted">{product.description}</p>
+          <h4>Price</h4>
+          <p className="fs-4 fw-bold text-success">${product.price}</p>
+          {product.bestseller ?<div>
+          <h4 className='fs-4 fw-bold text-success'>BestSeller</h4>
+          </div>: null}
 
-          {/* Rating */}
-          <div className="rating-stars mb-2 d-flex align-items-center">
-            {renderStars(product.rating || 4.3)}
-            <span className="rating-text ms-2">({product.reviewsCount || 12} reviews)</span>
+          {product.rating && (
+            <p className="text-warning fs-5">
+              {renderStars(product.rating)} <span className="text-dark ms-2">({product.rating.toFixed(1)})</span>
+            </p>
+          )}
+        </div>
+      </div>
+
+      <hr />
+
+      {/* Reviews */}
+      <div className="mt-4">
+        <h4 className="mb-3">Customer Reviews</h4>
+
+        {reviews.length === 0 ? (
+          <p className="text-muted">No reviews yet. Be the first to write one!</p>
+        ) : (
+          <ul className="list-group mb-4">
+            {reviews.map((review) => (
+              <li key={review._id} className="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{review.username || 'Anonymous'}</strong>
+                  <p className="mb-1">{review.comment}</p>
+                </div>
+                <button
+                  className="btn btn-outline-primary btn-sm"
+                  onClick={() => handleLike(review._id)}
+                  disabled={!isLoggedIn}
+                >
+                  👍 {review.likes?.length || 0}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Add Review */}
+        {isLoggedIn && (
+          <div>
+            <textarea
+              className="form-control"
+              rows="3"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Write a review..."
+            />
+            <button className="btn btn-primary mt-2" onClick={handleSubmitReview}>
+              Submit Review
+            </button>
           </div>
-
-          <p className="product-price h4 text-danger">
-            ${product.sale ? product.salePrice : product.price}
-            {product.sale && (
-              <>
-                <span className="old-price ms-2 text-muted text-decoration-line-through">${product.price}</span>
-                <span className="discount-tag ms-2 text-success">21% off</span>
-              </>
-            )}
-          </p>
-
-          <p className="desc mt-3">{product.description}</p>
-          <p><strong>Category:</strong> {product.category} / {product.subcategory}</p>
-          <p><strong>Sizes:</strong> {product.sizes.join(', ')}</p>
-          <p><strong>Bestseller:</strong> {product.bestseller ? 'Yes' : 'No'}</p>
-        </div>
+        )}
       </div>
     </div>
   );
 };
-  
+
 export default DetailedPro;
