@@ -1,0 +1,125 @@
+.signupContainer {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.colorBlobs {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.colorBlobs span {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.6;
+  animation: move 20s infinite alternate ease-in-out;
+}
+
+.colorBlobs span:nth-child(1) {
+  background: #ff00cc;
+  top: 10%;
+  left: 20%;
+}
+
+.colorBlobs span:nth-child(2) {
+  background: #00f2fe;
+  top: 50%;
+  left: 60%;
+}
+
+.colorBlobs span:nth-child(3) {
+  background: #ff6a00;
+  top: 80%;
+  left: 10%;
+}
+
+@keyframes move {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, -50px);
+  }
+}
+
+.formLabel {
+  font-weight: 500;
+}
+
+.formControl {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 15px;
+}
+
+.formControl:focus {
+  box-shadow: 0 0 5px rgba(0, 170, 255, 0.5);
+  outline: none;
+}
+
+.textDanger {
+  font-size: 0.85rem;
+}
+
+.textSuccess {
+  font-size: 1rem;
+  font-weight: 500;
+  background: rgba(0, 255, 136, 0.2);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.textPrimary {
+  color: #00aaff !important;
+}
+
+.animatedButton {
+  padding: 10px 20px;
+  background: #00aaff;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.animatedButton:hover {
+  transform: scale(1.05);
+  background: #0088cc;
+  box-shadow: 0 0 15px rgba(0, 170, 255, 0.6);
+}
+
+.animatedButton::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.animatedButton:hover::after {
+  width: 200px;
+  height: 200px;
+}

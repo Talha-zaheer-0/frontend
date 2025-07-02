@@ -35,15 +35,14 @@ const Login = () => {
     if (Object.keys(newErrors).length === 0) {
       try {
         const user = await login(formData.email, formData.password);
-                // Save token to localStorage
-       
+        console.log('Logged in user:', user);
         if (user.isAdmin) {
           navigate('/admin');
         } else {
           navigate('/');
         }
       } catch (err) {
-        console.error("❌ Login error:", err);
+        console.error("❌ Login error:", err.response?.data || err.message);
         setServerError(err.response?.data?.msg || "Something went wrong");
       }
     }

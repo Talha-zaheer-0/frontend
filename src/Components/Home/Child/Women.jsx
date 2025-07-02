@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Card, Spinner, Button } from 'react-bootstrap';
-import { FaPlus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const WomensClothingGallery = () => {
@@ -25,6 +24,26 @@ const WomensClothingGallery = () => {
       });
   }, []);
 
+  const handleAddToCart = async (productId) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      await axios.post(
+        `http://localhost:5000/api/products/cart/add`,
+        { productId, quantity: 1 },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert('Product added to cart!');
+    } catch (err) {
+      console.error('Error adding to cart:', err.response?.data || err.message);
+      alert('Failed to add product to cart');
+    }
+  };
+
   return (
     <div className="container py-4">
       <h2 className="text-center mb-4">
@@ -44,19 +63,40 @@ const WomensClothingGallery = () => {
             <div className="text-center text-muted">No women's products found.</div>
           ) : (
             womensProducts.map((item, index) => (
-              <div key={item._id || index} className="col-md-3 col-sm-6 mb-4" onClick={() => navigate(`/product/${item._id}`)}>
+              <div key={item._id || index} className="col-md-3 col-sm-6 mb-4">
                 <Card className="h-100 shadow-sm d-flex flex-column">
                   <Card.Img
                     variant="top"
                     src={item.images?.[0] || 'https://via.placeholder.com/250x250?text=No+Image'}
-                    style={{ height: '250px', objectFit: 'cover' }}
+                    style={{ height: '250px', objectFit: 'cover', cursor: 'pointer' }}
                     alt={item.name}
+                    onClick={() => navigate(`/product/${item._id}`)}
                   />
                   <Card.Body className="text-center d-flex flex-column justify-content-between">
                     <div>
                       <Card.Title className="fs-6 mb-2">{item.name}</Card.Title>
-                      <Card.Text className="fw-bold mb-3">${item.price.toFixed(2)}</Card.Text>
+                      <div className="d-flex justify-content-center align-items-center mb-2">
+                        <Card.Text className="fw-bold me-2">
+                          ${(item.price * (1 - (item.discountPercentage || 0) / 100)).toFixed(2)}
+                        </Card.Text>
+                        {item.discountPercentage > 0 && (
+                          <Card.Text className="text-muted text-decoration-line-through">
+                            ${item.price.toFixed(2)}
+                          </Card.Text>
+                        )}
+                      </div>
+                      {item.discountPercentage > 0 && (
+                        <Card.Text className="text-success">{item.discountPercentage}% Off</Card.Text>
+                      )}
+                      <Card.Text>Reviews: {item.reviewCount || 0}</Card.Text>
                     </div>
+                    <Button
+                      variant="dark"
+                      className="rounded-pill mt-2"
+                      onClick={() => handleAddToCart(item._id)}
+                    >
+                      Add to Cart
+                    </Button>
                   </Card.Body>
                 </Card>
               </div>
@@ -65,7 +105,6 @@ const WomensClothingGallery = () => {
         </div>
       )}
 
-      {/* See All Button */}
       {!loading && womensProducts.length > 0 && (
         <div className="text-center mt-4">
           <Link to="/collection?category=Women">

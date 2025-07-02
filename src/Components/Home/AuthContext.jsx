@@ -14,9 +14,10 @@ export const AuthProvider = ({ children }) => {
         const response = await axios.get('http://localhost:5000/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log('Fetched user:', response.data.user);
         setUser(response.data.user);
       } catch (err) {
-        console.error('Error fetching user:', err);
+        console.error('Error fetching user:', err.response?.data || err.message);
         localStorage.removeItem('token');
         setUser(null);
       }
@@ -32,11 +33,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-    localStorage.setItem('token', response.data.token);
-    setUser(response.data.user);
-    window.dispatchEvent(new Event('authChange'));
-    return response.data.user;
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      console.log('Login response:', response.data);
+      localStorage.setItem('token', response.data.token);
+      setUser(response.data.user);
+      window.dispatchEvent(new Event('authChange'));
+      return response.data.user;
+    } catch (err) {
+      console.error('Login error:', err.response?.data || err.message);
+      throw err;
+    }
   };
 
   const logout = () => {

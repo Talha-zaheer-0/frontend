@@ -4,7 +4,7 @@ import { AuthProvider } from './Components/Home/AuthContext';
 import Signup from './Components/Home/Navbar/child/Signup';
 import Home from './Components/Home/Home';
 import Navbar from './Components/Home/Navbar/Navbar';
-import Login from './Components/Home/Navbar/child/Login';
+import Login from './Components/Home/Navbar/child/login';
 import About from './Components/Home/Navbar/child/About';
 import Collection from './Components/Home/Child/Collection';
 import DetailedPro from './Components/Home/Child/details';
@@ -16,6 +16,7 @@ import Listitem from './Components/Home/Admin/Listitems';
 import Orders from './Components/Home/Admin/Orders';
 import Profile from './Components/Home/Navbar/child/Profile';
 import Cart from './Components/Home/Navbar/child/Cart';
+import Checkout from './Components/Home/Navbar/child/Checkout';
 import BlockAnyUser from './Components/Home/Admin/BlockUser';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -36,7 +37,7 @@ function MainRoutes() {
 
   return (
     <>
-       <Navbar />
+      <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
@@ -47,11 +48,13 @@ function MainRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
         <Route path="/admin/*" element={<AdminPanel />}>
           <Route path="add-items" element={<AddItems />} />
+          <Route path="add-items/:id" element={<AddItems />} /> {/* Added for editing */}
           <Route path="list-items" element={<Listitem />} />
           <Route path="orders" element={<Orders />} />
-          <Route path="blockusers" element={<BlockAnyUser/>}/>
+          <Route path="blockusers" element={<BlockAnyUser />} />
         </Route>
       </Routes>
       {!hideNavAndFooter && <Footer />}

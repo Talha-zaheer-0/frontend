@@ -4,6 +4,7 @@ import * as Yup from 'yup';
 import { Link, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
+import style from './Signup.module.css';
 
 const Signup = () => {
   const [isVerifying, setIsVerifying] = useState(false);
@@ -33,7 +34,7 @@ const Signup = () => {
       console.log('Signup success:', response.data);
       setTempUserId(response.data.tempUserId);
       setIsVerifying(true);
-      setMessage('Please check your email for the verification code.');
+      setMessage(response.data.msg); // Includes attempt count, e.g., "Verification code sent to email (Attempt 2 of 3)"
       resetForm();
     } catch (error) {
       console.error('Signup error:', error);
@@ -64,8 +65,13 @@ const Signup = () => {
   };
 
   return (
-    <div className="container py-5" style={{ maxWidth: '500px' }}>
-      <h2 className="mb-4 text-center">{isVerifying ? 'Verify Email' : 'Sign Up'}</h2>
+    <div className={`container py-5 ${style.signupContainer}`} style={{ maxWidth: '500px' }}>
+      <div className={style.colorBlobs}>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <h2 className="mb-4 text-center text-white">{isVerifying ? 'Verify Email' : 'Sign Up'}</h2>
 
       {!isVerifying ? (
         <>
@@ -77,55 +83,61 @@ const Signup = () => {
             {({ isSubmitting }) => (
               <Form noValidate>
                 <div className="mb-3">
-                  <label htmlFor="name" className="form-label">Full Name</label>
-                  <Field name="name" type="text" className="form-control" placeholder="John Doe" />
-                  <ErrorMessage name="name" component="div" className="text-danger small" />
+                  <label htmlFor="name" className={`form-label ${style.formLabel}`}>Full Name</label>
+                  <Field name="name" type="text" className={`form-control ${style.formControl}`} placeholder="John Doe" />
+                  <ErrorMessage name="name" component="div" className={style.textDanger} />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email Address</label>
-                  <Field name="email" type="email" className="form-control" placeholder="john@example.com" />
-                  <ErrorMessage name="email" component="div" className="text-danger small" />
+                  <label htmlFor="email" className={`form-label ${style.formLabel}`}>Email Address</label>
+                  <Field name="email" type="email" className={`form-control ${style.formControl}`} placeholder="john@example.com" />
+                  <ErrorMessage name="email" component="div" className={style.textDanger} />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="password" className="form-label">Password</label>
-                  <Field name="password" type="password" className="form-control" placeholder="••••••••" />
-                  <ErrorMessage name="password" component="div" className="text-danger small" />
+                  <label htmlFor="password" className={`form-label ${style.formLabel}`}>Password</label>
+                  <Field name="password" type="password" className={`form-control ${style.formControl}`} placeholder="••••••••" />
+                  <ErrorMessage name="password" component="div" className={style.textDanger} />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-                  <Field name="confirmPassword" type="password" className="form-control" placeholder="••••••••" />
-                  <ErrorMessage name="confirmPassword" component="div" className="text-danger small" />
+                  <label htmlFor="confirmPassword" className={`form-label ${style.formLabel}`}>Confirm Password</label>
+                  <Field name="confirmPassword" type="password" className={`form-control ${style.formControl}`} placeholder="••••••••" />
+                  <ErrorMessage name="confirmPassword" component="div" className={style.textDanger} />
                 </div>
-                <button type="submit" className="btn btn-dark w-100 rounded-pill" disabled={isSubmitting}>
+                <button type="submit" className={`btn btn-dark w-100 rounded-pill ${style.animatedButton}`} disabled={isSubmitting}>
                   {isSubmitting ? 'Submitting...' : 'Sign Up'}
                 </button>
               </Form>
             )}
           </Formik>
-          <p className="text-center mt-3">
-            Already have an account? <Link to="/login">Login here</Link>
+          <p className="text-center mt-3 text-white">
+            Already have an account? <Link to="/login" className={style.textPrimary}>Login here</Link>
           </p>
         </>
       ) : (
         <form onSubmit={handleVerify}>
           <div className="mb-3">
-            <label htmlFor="verificationCode" className="form-label">Verification Code</label>
+            <label htmlFor="verificationCode" className={`form-label ${style.formLabel}`}>Verification Code</label>
             <input
               type="text"
-              className="form-control"
+              className={`form-control ${style.formControl}`}
               placeholder="Enter 6-digit code"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
               required
             />
           </div>
-          <button type="submit" className="btn btn-dark w-100 rounded-pill">
+          <button type="submit" className={`btn btn-dark w-100 rounded-pill ${style.animatedButton}`}>
             Verify
           </button>
         </form>
       )}
 
-      {message && <p className="text-center mt-3" style={{ color: message.includes('error') ? 'red' : 'green' }}>{message}</p>}
+      {message && (
+        <p
+          className={`text-center mt-3 ${message.includes('error') || message.includes('Too many attempts') ? style.textDanger : style.textSuccess}`}
+        >
+          {message}
+        </p>
+      )}
     </div>
   );
 };

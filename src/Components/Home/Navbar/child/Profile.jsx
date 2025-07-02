@@ -21,6 +21,7 @@ const Profile = () => {
         setUser(response.data.user);
       } catch (err) {
         setError('Failed to load profile');
+        console.error('Profile fetch error:', err.response?.data || err.message);
         localStorage.removeItem('token');
         navigate('/login');
       }

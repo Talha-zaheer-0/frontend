@@ -1,23 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function AddItems() {
+  const { id } = useParams(); // Get product ID from URL
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: 'Men',
     subcategory: 'Topwear',
     price: '',
+    discountPercentage: '',
     sizes: [],
     bestseller: false,
   });
-
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [message, setMessage] = useState('');
 
   const sizeOptions = ['S', 'M', 'L', 'XL', 'XXL'];
+
+  // Fetch product data if editing
+  useEffect(() => {
+    if (id) {
+      const fetchProduct = async () => {
+        try {
+          const response = await axios.get(`http://localhost:5000/api/products/${id}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+          const product = response.data;
+          setFormData({
+            name: product.name,
+            description: product.description || '',
+            category: product.category,
+            subcategory: product.subcategory,
+            price: product.price,
+            discountPercentage: product.discountPercentage || '',
+            sizes: product.sizes,
+            bestseller: product.bestseller,
+          });
+          setPreviewUrls(product.images || []);
+        } catch (err) {
+          console.error('❌ Fetch Product Error:', err.response?.data || err.message);
+          setMessage(err.response?.data?.message || '❌ Failed to fetch product.');
+        }
+      };
+      fetchProduct();
+    }
+  }, [id]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -38,24 +72,37 @@ export default function AddItems() {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length > 4) return alert("You can upload a maximum of 4 images.");
+    if (files.length + previewUrls.length > 4) return alert("You can upload a maximum of 4 images.");
     setImages(files);
-    setPreviewUrls(files.map(file => URL.createObjectURL(file)));
+    setPreviewUrls([...previewUrls, ...files.map(file => URL.createObjectURL(file))]);
+  };
+
+  const handleRemoveImage = (index) => {
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (images.length < 1) return alert("Please upload at least 1 image.");
+    if (previewUrls.length < 1 && !id) return alert("Please upload at least 1 image.");
 
     const token = localStorage.getItem('token');
     if (!token) {
-      setMessage("❌ Please log in as admin to add products.");
+      setMessage("❌ Please log in as admin to add/update products.");
       return;
     }
 
     const data = new FormData();
     images.forEach(img => data.append("images", img));
+    // Send existing image URLs for updates
+    if (id) {
+      previewUrls.forEach(url => {
+        if (!url.startsWith('blob:')) {
+          data.append("existingImages", url);
+        }
+      });
+    }
     for (let key in formData) {
       if (key === "sizes") {
         formData.sizes.forEach(size => data.append("sizes", size));
@@ -65,33 +112,40 @@ export default function AddItems() {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/products/add", data, {
+      const url = id ? `http://localhost:5000/api/products/${id}` : 'http://localhost:5000/api/products/add';
+      const method = id ? 'put' : 'post';
+      const res = await axios({
+        method,
+        url,
+        data,
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
-      setMessage("✅ Product added successfully!");
+      setMessage(id ? "✅ Product updated successfully!" : "✅ Product added successfully!");
       setFormData({
         name: '',
         description: '',
         category: 'Men',
         subcategory: 'Topwear',
         price: '',
+        discountPercentage: '',
         sizes: [],
         bestseller: false
       });
       setImages([]);
       setPreviewUrls([]);
+      navigate('/admin/list-items'); // Redirect to product list after success
     } catch (err) {
       console.error('❌ Axios error:', err.response?.data || err.message);
-      setMessage(err.response?.data?.message || "❌ Failed to upload product.");
+      setMessage(err.response?.data?.message || `❌ Failed to ${id ? 'update' : 'add'} product.`);
     }
   };
 
   return (
     <div className="container py-5">
-      <h2 className="mb-4">Upload Product</h2>
+      <h2 className="mb-4">{id ? 'Update Product' : 'Upload Product'}</h2>
       <form onSubmit={handleSubmit} className="bg-light p-4 rounded shadow-sm">
         <div className="mb-3">
           <label className="form-label">Upload Image</label>
@@ -104,7 +158,17 @@ export default function AddItems() {
           />
           <div className="d-flex gap-2 mt-2 flex-wrap">
             {previewUrls.map((url, i) => (
-              <img key={i} src={url} alt="preview" width="70" height="70" style={{ objectFit: 'cover', borderRadius: 5 }} />
+              <div key={i} className="position-relative">
+                <img src={url} alt="preview" width="70" height="70" style={{ objectFit: 'cover', borderRadius: 5 }} />
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm position-absolute top-0 end-0"
+                  style={{ transform: 'translate(50%, -50%)' }}
+                  onClick={() => handleRemoveImage(i)}
+                >
+                  X
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -145,8 +209,24 @@ export default function AddItems() {
         </div>
 
         <div className="mb-3">
+          <label className="form-label">Discount Percentage (0-100)</label>
+          <input
+            type="number"
+            className="form-control"
+            name="discountPercentage"
+            value={formData.discountPercentage}
+            onChange={handleInputChange}
+            min="0"
+            max="100"
+            placeholder="Enter discount percentage"
+          />
+        </div>
+
+        <div className="mb-3">
           <label className="form-label d-block">Product Sizes</label>
-          <div className="btn-group" role="group">
+          <div className="btn-group" role="group
+
+">
             {['S', 'M', 'L', 'XL', 'XXL'].map(size => (
               <button
                 type="button"
@@ -165,7 +245,7 @@ export default function AddItems() {
           <label className="form-check-label" htmlFor="bestseller">Add to bestseller</label>
         </div>
 
-        <button type="submit" className="btn btn-dark px-4">ADD</button>
+        <button type="submit" className="btn btn-dark px-4">{id ? 'Update' : 'Add'}</button>
         {message && <p className="mt-3 fw-semibold text-success">{message}</p>}
       </form>
     </div>

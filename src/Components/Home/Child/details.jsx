@@ -1,13 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { AuthContext } from '../AuthContext';
 
 const DetailedPro = () => {
   const { id: productId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [product, setProduct] = useState({});
   const [mainImage, setMainImage] = useState('');
   const [reviews, setReviews] = useState([]);
   const [comment, setComment] = useState('');
+  const [rating, setRating] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check login status
@@ -27,37 +31,67 @@ const DetailedPro = () => {
       })
       .catch(err => console.log('Error loading product:', err));
 
-    axios.get(`http://localhost:5000/api/reviews/${productId}`)
+    axios.get(`http://localhost:5000/api/products/reviews/${productId}`)
       .then(res => setReviews(res.data))
       .catch(err => console.log('Error loading reviews:', err));
   }, [productId]);
 
-  // Submit review
-  const handleSubmitReview = async () => {
-    const token = localStorage.getItem('token');
-    if (!comment.trim() || !token) return;
+  // Add to cart
+  const handleAddToCart = async () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
 
     try {
-      const res = await axios.post(
-        `http://localhost:5000/api/reviews/${productId}`,
-        { comment },
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `http://localhost:5000/api/products/cart/add`,
+        { productId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setReviews([res.data, ...reviews]);
-      setComment('');
+      alert('Product added to cart!');
     } catch (err) {
-      console.log('Error posting review:', err);
+      console.error('Error adding to cart:', err.response?.data || err.message);
+      alert('Failed to add product to cart');
+    }
+  };
+
+  // Submit review
+  const handleSubmitReview = async () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    if (!comment.trim() || !rating) {
+      alert('Please provide a comment and rating');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        `http://localhost:5000/api/products/review`,
+        { productId, rating, comment },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setReviews([res.data.review, ...reviews]);
+      setComment('');
+      setRating(0);
+    } catch (err) {
+      console.error('Error posting review:', err.response?.data || err.message);
+      alert(err.response?.data?.message || 'Failed to submit review');
     }
   };
 
   // Like review
   const handleLike = async (reviewId) => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!isLoggedIn) return;
 
     try {
+      const token = localStorage.getItem('token');
       const res = await axios.post(
-        `http://localhost:5000/api/reviews/${reviewId}/like`,
+        `http://localhost:5000/api/products/reviews/${reviewId}/like`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -67,10 +101,9 @@ const DetailedPro = () => {
     }
   };
 
-  // Render star rating (rounded)
+  // Render star rating
   const renderStars = (rating) => {
-    const rounded = Math.round(rating || 0);
-    return '★'.repeat(rounded) + '☆'.repeat(5 - rounded);
+    return '★'.repeat(Math.round(rating || 0)) + '☆'.repeat(5 - Math.round(rating || 0));
   };
 
   return (
@@ -103,20 +136,37 @@ const DetailedPro = () => {
         {/* Product Info */}
         <div className="col-md-5">
           <h4>Name</h4>
-          <p className="">{product.name}</p>
+          <p>{product.name}</p>
           <h4>Description</h4>
           <p className="text-muted">{product.description}</p>
           <h4>Price</h4>
-          <p className="fs-4 fw-bold text-success">${product.price}</p>
-          {product.bestseller ?<div>
-          <h4 className='fs-4 fw-bold text-success'>BestSeller</h4>
-          </div>: null}
-
+          <div className="d-flex align-items-center">
+            <p className="fs-4 fw-bold text-success me-2">
+              ${(product.price * (1 - (product.discountPercentage || 0) / 100)).toFixed(2)}
+            </p>
+            {product.discountPercentage > 0 && (
+              <p className="text-muted text-decoration-line-through">${product.price.toFixed(2)}</p>
+            )}
+          </div>
+          {product.discountPercentage > 0 && (
+            <p className="text-success">{product.discountPercentage}% Off</p>
+          )}
+          {product.bestseller && (
+            <h4 className="fs-4 fw-bold text-success">BestSeller</h4>
+          )}
+          <p>Sales: {product.salesCount || 0}</p>
+          <p>Reviews: {product.reviewCount || 0}</p>
           {product.rating && (
             <p className="text-warning fs-5">
               {renderStars(product.rating)} <span className="text-dark ms-2">({product.rating.toFixed(1)})</span>
             </p>
           )}
+          <button
+            className="btn btn-dark rounded-pill mt-3"
+            onClick={handleAddToCart}
+          >
+            Add to Cart
+          </button>
         </div>
       </div>
 
@@ -124,8 +174,7 @@ const DetailedPro = () => {
 
       {/* Reviews */}
       <div className="mt-4">
-        <h4 className="mb-3">Customer Reviews</h4>
-
+        <h4 className="mb-3">Customer Reviews ({product.reviewCount || 0})</h4>
         {reviews.length === 0 ? (
           <p className="text-muted">No reviews yet. Be the first to write one!</p>
         ) : (
@@ -134,6 +183,7 @@ const DetailedPro = () => {
               <li key={review._id} className="list-group-item d-flex justify-content-between align-items-center">
                 <div>
                   <strong>{review.username || 'Anonymous'}</strong>
+                  <p className="mb-1 text-warning">{renderStars(review.rating)}</p>
                   <p className="mb-1">{review.comment}</p>
                 </div>
                 <button
@@ -148,9 +198,22 @@ const DetailedPro = () => {
           </ul>
         )}
 
-        {/* Add Review */}
         {isLoggedIn && (
           <div>
+            <div className="mb-3">
+              <label className="form-label">Rating</label>
+              <div>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    style={{ cursor: 'pointer', color: star <= rating ? 'gold' : 'grey', fontSize: '1.5rem' }}
+                    onClick={() => setRating(star)}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+            </div>
             <textarea
               className="form-control"
               rows="3"
