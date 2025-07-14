@@ -1,0 +1,7 @@
+.order-item-img {
+  width: 80px !important;
+  height: 80px !important;
+  object-fit: contain !important;
+  border-radius: 0.25rem !important;
+  margin-right: 1rem !important;
+}

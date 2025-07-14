@@ -1,7 +1,10 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../AuthContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import styles from './detail.module.css';
 
 const DetailedPro = () => {
   const { id: productId } = useParams();
@@ -9,34 +12,100 @@ const DetailedPro = () => {
   const { user } = useContext(AuthContext);
   const [product, setProduct] = useState({});
   const [mainImage, setMainImage] = useState('');
-  const [reviews, setReviews] = useState([]);
+  const [productComments, setProductComments] = useState([]);
   const [comment, setComment] = useState('');
-  const [rating, setRating] = useState(0);
+  const [commentImage, setCommentImage] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyImage, setReplyImage] = useState(null);
+  const [selectedCommentId, setSelectedCommentId] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showProductCommentBox, setShowProductCommentBox] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [userRating, setUserRating] = useState(null);
+  const [averageRating, setAverageRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [isLiking, setIsLiking] = useState({});
+  const [showReplies, setShowReplies] = useState({});
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const carouselRef = useRef(null);
 
-  // Check login status
+  const renderStars = (rating, interactive = false, onStarClick = () => {}) => {
+    const starRating = Math.round(rating || 0);
+    return [...Array(5)].map((_, i) => (
+      <span
+        key={i}
+        className={`${styles.star} ${i < starRating ? styles.filled : styles.empty}`}
+        onClick={interactive ? () => onStarClick(i + 1) : undefined}
+        style={interactive ? { cursor: 'pointer' } : {}}
+      >
+        ★
+      </span>
+    ));
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
-  }, []);
-
-  // Fetch product and reviews
-  useEffect(() => {
     if (!productId) return;
 
+    // Fetch product details
     axios.get(`http://localhost:5000/api/products/${productId}`)
       .then(res => {
-        setProduct(res.data);
-        setMainImage(res.data.images?.[0] || '');
+        const data = res.data || {};
+        setProduct(data);
+        setMainImage(data.images?.[0] || '');
+        setAverageRating(parseFloat(data.averageRating) || 0);
+        setReviewCount(data.reviewCount || 0);
+        console.log('Product data:', data);
       })
-      .catch(err => console.log('Error loading product:', err));
+      .catch(err => console.error('Error loading product:', err));
 
-    axios.get(`http://localhost:5000/api/products/reviews/${productId}`)
-      .then(res => setReviews(res.data))
-      .catch(err => console.log('Error loading reviews:', err));
-  }, [productId]);
+    // Fetch product comments
+    axios.get(`http://localhost:5000/api/products/comments/${productId}`)
+      .then(res => {
+        const data = res.data || [];
+        setProductComments(data);
+        console.log('Product comments data:', data);
+      })
+      .catch(err => console.error('Error loading product comments:', err));
 
-  // Add to cart
+    // Fetch user rating if logged in
+    if (token) {
+      axios.get(`http://localhost:5000/api/products/rating/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(res => {
+          setUserRating(res.data.userRating);
+          setAverageRating(parseFloat(res.data.averageRating) || 0);
+          setReviewCount(res.data.reviewCount || 0);
+        })
+        .catch(err => console.error('Error loading user rating:', err));
+    }
+
+    // Fetch related products
+    axios.get(`http://localhost:5000/api/products?category=${encodeURIComponent(product.category)}`)
+      .then(res => {
+        const data = res.data || [];
+        // Exclude the current product and limit to 6
+        const filtered = data
+          .filter(p => p._id !== productId)
+          .slice(0, 16)
+          .map(p => ({
+            id: p._id,
+            name: p.name,
+            price: p.price,
+            salePrice: p.price * (1 - (p.discountPercentage || 0) / 100),
+            image: p.images?.[0] || '/placeholder.jpg',
+            discountPercentage: p.discountPercentage || 0,
+          }));
+        setRelatedProducts(filtered);
+        console.log('Related products:', filtered);
+      })
+      .catch(err => console.error('Error loading related products:', err));
+  }, [productId, product.category]);
+
   const handleAddToCart = async () => {
     if (!isLoggedIn) {
       navigate('/login');
@@ -47,186 +116,488 @@ const DetailedPro = () => {
       const token = localStorage.getItem('token');
       await axios.post(
         `http://localhost:5000/api/products/cart/add`,
-        { productId, quantity: 1 },
+        { productId, quantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert('Product added to cart!');
     } catch (err) {
       console.error('Error adding to cart:', err.response?.data || err.message);
-      alert('Failed to add product to cart');
+      alert('Failed to add product to cart: ' + (err.response?.data?.message || 'Server error'));
     }
   };
 
-  // Submit review
-  const handleSubmitReview = async () => {
+  const handleSubmitComment = async (parentId, isReply = false) => {
+    if (!isLoggedIn || (!comment.trim() && !isReply) || (isReply && !replyText.trim())) {
+      alert('Please log in and enter a comment');
+      return;
+    }
+
+    const formData = new FormData();
+    if (isReply) {
+      formData.append('commentId', parentId);
+      formData.append('reply', replyText);
+      if (replyImage) formData.append('image', replyImage);
+    } else {
+      formData.append('productId', productId);
+      formData.append('text', comment);
+      if (commentImage) formData.append('image', commentImage);
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const endpoint = isReply ? 'review/reply' : 'product-comment';
+      const res = await axios.post(
+        `http://localhost:5000/api/products/${endpoint}`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+      );
+      if (isReply) {
+        setProductComments(prevComments =>
+          prevComments.map(c =>
+            c._id === parentId
+              ? { ...c, replies: [...(c.replies || []), { ...res.data, userId: user?._id, username: user?.name }] }
+              : c
+          )
+        );
+      } else {
+        setProductComments(prevComments => [{ ...res.data, userId: user?._id, username: user?.name }, ...prevComments]);
+      }
+      setComment('');
+      setCommentImage(null);
+      setReplyText('');
+      setReplyImage(null);
+      setSelectedCommentId(null);
+      setShowProductCommentBox(false);
+      alert(isReply ? 'Reply submitted successfully!' : 'Comment submitted successfully!');
+    } catch (err) {
+      console.error('Error posting comment/reply:', err.response?.data || err.message);
+      alert('Failed to submit comment/reply: ' + (err.response?.data?.message || 'Server error'));
+    }
+  };
+
+  const handleLikeComment = async (commentId) => {
+    if (!isLoggedIn) {
+      alert('Please log in to like a comment');
+      return;
+    }
+
+    if (isLiking[commentId]) return;
+
+    setIsLiking(prev => ({ ...prev, [commentId]: true }));
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        `http://localhost:5000/api/products/comment/${commentId}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setProductComments(prevComments =>
+        prevComments.map(c =>
+          c._id === commentId
+            ? { ...c, likes: Array.isArray(res.data.likes) ? res.data.likes : [] }
+            : c
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling like:', err.response?.data || err.message);
+      alert('Failed to toggle like: ' + (err.response?.data?.message || 'Server error'));
+    } finally {
+      setIsLiking(prev => ({ ...prev, [commentId]: false }));
+    }
+  };
+
+  const handleRateProduct = async (rating) => {
     if (!isLoggedIn) {
       navigate('/login');
       return;
     }
-    if (!comment.trim() || !rating) {
-      alert('Please provide a comment and rating');
-      return;
-    }
 
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(
-        `http://localhost:5000/api/products/review`,
-        { productId, rating, comment },
+        `http://localhost:5000/api/products/rating`,
+        { productId, rating },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setReviews([res.data.review, ...reviews]);
-      setComment('');
-      setRating(0);
+      setUserRating(rating);
+      setAverageRating(parseFloat(res.data.averageRating) || 0);
+      setReviewCount(res.data.reviewCount || 0);
+      alert(res.data.message);
     } catch (err) {
-      console.error('Error posting review:', err.response?.data || err.message);
-      alert(err.response?.data?.message || 'Failed to submit review');
+      console.error('Error submitting rating:', err.response?.data || err.message);
+      alert('Failed to submit rating: ' + (err.response?.data?.message || 'Server error'));
     }
   };
 
-  // Like review
-  const handleLike = async (reviewId) => {
-    if (!isLoggedIn) return;
+  const handleImageClick = (imageUrl) => {
+    setSelectedImage(imageUrl || '');
+  };
 
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.post(
-        `http://localhost:5000/api/products/reviews/${reviewId}/like`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setReviews(reviews.map(r => r._id === reviewId ? res.data : r));
-    } catch (err) {
-      console.log('Error liking review:', err);
+  const closePopup = () => {
+    setSelectedImage(null);
+  };
+
+  const toggleReplies = (commentId) => {
+    setShowReplies(prev => ({
+      ...prev,
+      [commentId]: !prev[commentId],
+    }));
+  };
+
+  const scrollLeft = () => {
+    if (carouselRef.current) {
+      const card = carouselRef.current.querySelector(`.${styles.relatedCard}`);
+      if (card) {
+        const cardWidth = card.offsetWidth + 20;
+        carouselRef.current.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+      }
     }
   };
 
-  // Render star rating
-  const renderStars = (rating) => {
-    return '★'.repeat(Math.round(rating || 0)) + '☆'.repeat(5 - Math.round(rating || 0));
+  const scrollRight = () => {
+    if (carouselRef.current) {
+      const card = carouselRef.current.querySelector(`.${styles.relatedCard}`);
+      if (card) {
+        const cardWidth = card.offsetWidth + 20;
+        carouselRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
+      }
+    }
   };
 
   return (
-    <div className="container my-4">
-      <div className="row">
-        {/* Image Sidebar */}
-        <div className="col-md-2 d-flex flex-column gap-2">
-          {product.images?.map((img, i) => (
+    <div className={styles.container}>
+      <div className={styles.topSection}>
+        <div className={styles.imageSection}>
+          <div className={styles.imageContainer}>
             <img
-              key={i}
-              src={img}
-              alt={`thumb-${i}`}
-              className={`img-thumbnail ${mainImage === img ? 'border-primary' : ''}`}
-              style={{ cursor: 'pointer' }}
-              onClick={() => setMainImage(img)}
+              src={mainImage || '/placeholder.jpg'}
+              alt="Product"
+              className={styles.mainImage}
             />
-          ))}
+          </div>
+          <div className={styles.thumbnailContainer}>
+            {product.images?.length > 0 ? (
+              product.images.map((img, i) => (
+                <img
+                  key={i}
+                  src={img || '/placeholder.jpg'}
+                  alt={`thumb-${i}`}
+                  className={`${styles.thumbnail} ${mainImage === img ? styles.active : ''}`}
+                  onClick={() => setMainImage(img)}
+                />
+              ))
+            ) : (
+              <p>No images available</p>
+            )}
+          </div>
         </div>
-
-        {/* Main Image */}
-        <div className="col-md-5">
-          <img
-            src={mainImage}
-            alt="Selected"
-            className="img-fluid rounded shadow-sm"
-            style={{ maxHeight: '400px', objectFit: 'contain' }}
-          />
-        </div>
-
-        {/* Product Info */}
-        <div className="col-md-5">
-          <h4>Name</h4>
-          <p>{product.name}</p>
-          <h4>Description</h4>
-          <p className="text-muted">{product.description}</p>
-          <h4>Price</h4>
-          <div className="d-flex align-items-center">
+        <div className={styles.productInfo}>
+          <h1 className={styles.productTitle}>{product.name || 'No name available'}</h1>
+          <p className="text-muted">{product.description || 'No description available'}</p>
+          <div className="d-flex align-items-center mb-2">
             <p className="fs-4 fw-bold text-success me-2">
-              ${(product.price * (1 - (product.discountPercentage || 0) / 100)).toFixed(2)}
+              ${(product.price * (1 - (product.discountPercentage || 0) / 100) || 0).toFixed(2)}
             </p>
             {product.discountPercentage > 0 && (
-              <p className="text-muted text-decoration-line-through">${product.price.toFixed(2)}</p>
+              <p className="text-muted text-decoration-line-through">${(product.price || 0).toFixed(2)}</p>
             )}
           </div>
           {product.discountPercentage > 0 && (
             <p className="text-success">{product.discountPercentage}% Off</p>
           )}
           {product.bestseller && (
-            <h4 className="fs-4 fw-bold text-success">BestSeller</h4>
+            <p className="text-success fw-bold">Best Seller</p>
           )}
           <p>Sales: {product.salesCount || 0}</p>
-          <p>Reviews: {product.reviewCount || 0}</p>
-          {product.rating && (
-            <p className="text-warning fs-5">
-              {renderStars(product.rating)} <span className="text-dark ms-2">({product.rating.toFixed(1)})</span>
-            </p>
+          <p>Reviews: {reviewCount}</p>
+          <div className={styles.starRating}>
+            {renderStars(averageRating)}
+            <span className={styles.ratingText}>({averageRating.toFixed(1)})</span>
+          </div>
+          {isLoggedIn && (
+            <div className="mt-2">
+              <p>Your Rating:</p>
+              <div className={styles.starRating}>
+                {renderStars(userRating || 0, true, handleRateProduct)}
+              </div>
+            </div>
           )}
-          <button
-            className="btn btn-dark rounded-pill mt-3"
-            onClick={handleAddToCart}
-          >
-            Add to Cart
-          </button>
+          <div className="d-flex align-items-center mt-3">
+            <button
+              className={styles.quantityButton}
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              disabled={quantity <= 1}
+            >
+              -
+            </button>
+            <input
+              type="number"
+              className={styles.input}
+              value={quantity}
+              min="1"
+              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+            />
+            <button
+              className={styles.quantityButton}
+              onClick={() => setQuantity(quantity + 1)}
+            >
+              +
+            </button>
+            <button
+              className={styles.buttonPrimary}
+              onClick={handleAddToCart}
+            >
+              Add to Cart
+            </button>
+          </div>
         </div>
       </div>
 
       <hr />
 
-      {/* Reviews */}
-      <div className="mt-4">
-        <h4 className="mb-3">Customer Reviews ({product.reviewCount || 0})</h4>
-        {reviews.length === 0 ? (
-          <p className="text-muted">No reviews yet. Be the first to write one!</p>
-        ) : (
-          <ul className="list-group mb-4">
-            {reviews.map((review) => (
-              <li key={review._id} className="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>{review.username || 'Anonymous'}</strong>
-                  <p className="mb-1 text-warning">{renderStars(review.rating)}</p>
-                  <p className="mb-1">{review.comment}</p>
-                </div>
-                <button
-                  className="btn btn-outline-primary btn-sm"
-                  onClick={() => handleLike(review._id)}
-                  disabled={!isLoggedIn}
-                >
-                  👍 {review.likes?.length || 0}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
+      <div className={styles.reviewSection}>
+        <h4>Product Comments ({productComments.length})</h4>
         {isLoggedIn && (
+          <div className="mb-3">
+            <button
+              className={styles.buttonSecondary}
+              onClick={() => {
+                setShowProductCommentBox(!showProductCommentBox);
+                setComment('');
+                setCommentImage(null);
+              }}
+            >
+              {showProductCommentBox ? 'Cancel' : 'Add Comment'}
+            </button>
+            {showProductCommentBox && (
+              <div className="mt-2">
+                <textarea
+                  className={styles.textarea}
+                  rows="3"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Add a new comment for the product..."
+                />
+                <input
+                  type="file"
+                  className="form-control mb-2"
+                  accept="image/*"
+                  onChange={(e) => setCommentImage(e.target.files[0])}
+                />
+                <button
+                  className={styles.buttonPrimary}
+                  onClick={() => handleSubmitComment(null, false)}
+                  disabled={!comment.trim()}
+                >
+                  Submit Comment
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        {productComments.length === 0 ? (
+          <p className="text-muted">No comments yet. Be the first to comment!</p>
+        ) : (
           <div>
-            <div className="mb-3">
-              <label className="form-label">Rating</label>
-              <div>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <span
-                    key={star}
-                    style={{ cursor: 'pointer', color: star <= rating ? 'gold' : 'grey', fontSize: '1.5rem' }}
-                    onClick={() => setRating(star)}
-                  >
-                    ★
-                  </span>
+            {productComments.slice(0, showAllComments ? productComments.length : 3).map((comment) => (
+              <div key={comment._id} className={styles.reviewItem}>
+                <div>
+                  <strong>{comment.username || 'Anonymous'}</strong>
+                  <p className="mb-1">{comment.text || 'No text'}</p>
+                  {comment.image && (
+                    <img
+                      src={comment.image || '/placeholder.jpg'}
+                      alt="Comment"
+                      className={styles.commentImage}
+                      onClick={() => handleImageClick(comment.image)}
+                    />
+                  )}
+                </div>
+                {isLoggedIn && (
+                  <div className="mt-2 d-flex gap-2 align-items-center">
+                    <span
+                      className={styles.replyLink}
+                      onClick={() => {
+                        setSelectedCommentId(selectedCommentId === comment._id ? null : comment._id);
+                        setReplyText('');
+                        setReplyImage(null);
+                      }}
+                    >
+                      reply
+                    </span>
+                    <span
+                      className={`${styles.likeIcon} ${comment.likes?.includes(user?._id) ? styles.liked : ''}`}
+                      onClick={() => handleLikeComment(comment._id)}
+                      style={{ cursor: isLiking[comment._id] ? 'not-allowed' : 'pointer' }}
+                    >
+                      <FontAwesomeIcon icon={faHeart} />
+                      <span className={styles.likeCount}>{comment.likes?.length || 0}</span>
+                    </span>
+                  </div>
+                )}
+                {selectedCommentId === comment._id && (
+                  <div className="mt-2">
+                    <textarea
+                      className={styles.textarea}
+                      rows="2"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Write a reply..."
+                    />
+                    <input
+                      type="file"
+                      className="form-control mb-2"
+                      accept="image/*"
+                      onChange={(e) => setReplyImage(e.target.files[0])}
+                    />
+                    <button
+                      className={styles.buttonPrimary}
+                      onClick={() => handleSubmitComment(comment._id, true)}
+                      disabled={!replyText.trim()}
+                    >
+                      Submit Reply
+                    </button>
+                  </div>
+                )}
+                {comment.replies && comment.replies.length > 0 && (
+                  <div className="mt-2">
+                    <button
+                      className={styles.viewRepliesButton}
+                      onClick={() => toggleReplies(comment._id)}
+                    >
+                      {showReplies[comment._id] ? 'Hide Replies' : `View Replies (${comment.replies.length})`}
+                    </button>
+                    {showReplies[comment._id] && (
+                      <div className="mt-2">
+                        {comment.replies.map((reply, rIndex) => (
+                          <div key={rIndex} className="ms-4 mt-2 p-2 border rounded">
+                            <p><strong>{reply.username || 'Anonymous'}:</strong> {reply.text || 'No text'}</p>
+                            {reply.image && (
+                              <img
+                                src={reply.image || '/placeholder.jpg'}
+                                alt="Reply"
+                                className={styles.commentImage}
+                                onClick={() => handleImageClick(reply.image)}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+            {productComments.length > 3 && (
+              <button
+                className={styles.buttonSecondary}
+                onClick={() => setShowAllComments(!showAllComments)}
+              >
+                {showAllComments ? 'Show Less' : 'See More Comments'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <hr />
+
+      <div className={styles.relatedProductsSection}>
+        <h4>Related Products</h4>
+        {relatedProducts.length === 0 ? (
+          <p className="text-muted">No related products found.</p>
+        ) : (
+          <div className={styles.carouselContainer}>
+            <button
+              className={`${styles.carouselButton} ${styles.carouselButtonLeft}`}
+              onClick={scrollLeft}
+            >
+              {"<"}
+            </button>
+            <div className={styles.carousel} ref={carouselRef}>
+              <div className={styles.carouselRow}>
+                {relatedProducts.map((item) => (
+                  <div key={item.id} className={styles.relatedCard}>
+                    <div className={styles.relatedCardContent}>
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className={styles.relatedImage}
+                        onClick={() => navigate(`/product/${item.id}`)}
+                        onError={(e) => { e.target.src = '/placeholder.jpg'; }}
+                      />
+                      <div className={styles.relatedPrice}>
+                        ${item.salePrice.toFixed(2)}
+                        {item.discountPercentage > 0 && (
+                          <span className={styles.relatedDiscount}>
+                            ${item.price.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
-            <textarea
-              className="form-control"
-              rows="3"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Write a review..."
-            />
-            <button className="btn btn-primary mt-2" onClick={handleSubmitReview}>
-              Submit Review
+            <button
+              className={`${styles.carouselButton} ${styles.carouselButtonRight}`}
+              onClick={scrollRight}
+            >
+              {">"}
             </button>
           </div>
         )}
       </div>
+
+      {selectedImage && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              position: 'relative',
+              maxWidth: '600px',
+              maxHeight: '600px',
+            }}
+          >
+            <img
+              src={selectedImage}
+              alt="Popup"
+              style={{ maxWidth: '100%', maxHeight: '100%' }}
+              onError={(e) => { e.target.src = '/placeholder.jpg'; }}
+            />
+            <button
+              onClick={closePopup}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '30px',
+                height: '30px',
+                cursor: 'pointer',
+                fontSize: '20px',
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

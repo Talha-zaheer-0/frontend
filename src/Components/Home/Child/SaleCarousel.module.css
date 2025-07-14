@@ -1,0 +1,34 @@
+.saleCarousel {
+  background: #ff6a00;
+  overflow: hidden;
+  white-space: nowrap;
+  height: 30px;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.saleText {
+  display: inline-block;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 0.4rem 0;
+  animation: marquee 15s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (max-width: 768px) {
+  .saleCarousel {
+    height: 24px;
+    margin-bottom: 0.8rem;
+  }
+
+  .saleText {
+    font-size: 0.9rem;
+    padding: 0.3rem 0;
+  }
+}

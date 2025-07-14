@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import Sidebar from './sidebar';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { jwtDecode } from 'jwt-decode'; // Changed to named import
+import { jwtDecode } from 'jwt-decode';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const AdminPanel = () => {
 
     try {
       const decoded = jwtDecode(token);
-      console.log('Decoded token:', decoded);
+      console.log('Decoded token:', decoded, 'isOwner:', decoded.isOwner);
       if (!decoded.isAdmin) {
         console.log('Not an admin, redirecting to /');
         navigate('/', { replace: true });

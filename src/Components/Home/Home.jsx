@@ -1,24 +1,24 @@
-import React from 'react'
-import Collection from './Child/Collection'
-import Men from "../Home/Child/Men"
-import Kid from "../Home/Child/Kid"
-import Women from "../Home/Child/Women"
-// import Electric from './Child/Electric'
-// import Cosmetics from './Child/Cosmatics'
-import Sales from './Child/Sale'
+import React from 'react';
+// import SaleCarousel from './Child/SaleCarousel';
+import HotProduct from './Child/HotProduct';
+import FeaturedProduct from './Child/FeaturedProduct';
+import Men from './Child/Men';
+import Kid from './Child/Kid';
+import Women from './Child/Women';
+import Sales from './Child/Sale';
+
 const Home = () => {
   return (
-    <div>
+    <div className="home-container">
+      {/* <SaleCarousel /> */}
       <Sales />
+      <HotProduct />
+      <FeaturedProduct />
       <Men />
       <Women />
       <Kid />
-      {/* <Collection /> */}
-      {/* <Electric /> */}
-      {/* <Cosmetics /> */}
-      
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

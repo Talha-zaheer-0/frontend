@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function AddItems() {
-  const { id } = useParams(); // Get product ID from URL
+  const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -16,13 +16,12 @@ export default function AddItems() {
     sizes: [],
     bestseller: false,
   });
-  const [images, setImages] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
+  const [images, setImages] = useState([]); // New uploads
+  const [previewUrls, setPreviewUrls] = useState([]); // All images for display
+  const [existingImages, setExistingImages] = useState([]); // Existing Cloudinary images
   const [message, setMessage] = useState('');
-
   const sizeOptions = ['S', 'M', 'L', 'XL', 'XXL'];
 
-  // Fetch product data if editing
   useEffect(() => {
     if (id) {
       const fetchProduct = async () => {
@@ -40,10 +39,12 @@ export default function AddItems() {
             subcategory: product.subcategory,
             price: product.price,
             discountPercentage: product.discountPercentage || '',
-            sizes: product.sizes,
+            sizes: product.sizes || [],
             bestseller: product.bestseller,
           });
           setPreviewUrls(product.images || []);
+          setExistingImages(product.images || []);
+          console.log('Fetched product images:', product.images);
         } catch (err) {
           console.error('❌ Fetch Product Error:', err.response?.data || err.message);
           setMessage(err.response?.data?.message || '❌ Failed to fetch product.');
@@ -57,7 +58,7 @@ export default function AddItems() {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -66,49 +67,63 @@ export default function AddItems() {
       ...prev,
       sizes: prev.sizes.includes(size)
         ? prev.sizes.filter(s => s !== size)
-        : [...prev.sizes, size]
+        : [...prev.sizes, size],
     }));
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length + previewUrls.length > 4) return alert("You can upload a maximum of 4 images.");
-    setImages(files);
-    setPreviewUrls([...previewUrls, ...files.map(file => URL.createObjectURL(file))]);
+    if (files.length + previewUrls.length > 4) {
+      alert('You can upload a maximum of 4 images.');
+      return;
+    }
+    setImages(prev => [...prev, ...files]);
+    setPreviewUrls(prev => [...prev, ...files.map(file => URL.createObjectURL(file))]);
+    console.log('New images added:', files.map(f => f.name));
   };
 
   const handleRemoveImage = (index) => {
+    const urlToRemove = previewUrls[index];
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
-    setImages(prev => prev.filter((_, i) => i !== index));
+    if (urlToRemove.startsWith('blob:')) {
+      // Remove from new images
+      setImages(prev => prev.filter((_, i) => i !== prev.length - (previewUrls.length - index)));
+    } else {
+      // Remove from existing images
+      setExistingImages(prev => prev.filter(url => url !== urlToRemove));
+    }
+    console.log('Removed image at index:', index, 'URL:', urlToRemove);
+    console.log('Updated existingImages:', existingImages.filter(url => url !== urlToRemove));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (previewUrls.length < 1 && !id) return alert("Please upload at least 1 image.");
+    if (previewUrls.length < 1) {
+      alert('Please upload at least 1 image.');
+      return;
+    }
 
     const token = localStorage.getItem('token');
     if (!token) {
-      setMessage("❌ Please log in as admin to add/update products.");
+      setMessage('❌ Please log in as admin to add/update products.');
       return;
     }
 
     const data = new FormData();
-    images.forEach(img => data.append("images", img));
-    // Send existing image URLs for updates
-    if (id) {
-      previewUrls.forEach(url => {
-        if (!url.startsWith('blob:')) {
-          data.append("existingImages", url);
-        }
-      });
-    }
+    images.forEach(img => data.append('images', img));
+    existingImages.forEach(url => data.append('existingImages', url));
     for (let key in formData) {
-      if (key === "sizes") {
-        formData.sizes.forEach(size => data.append("sizes", size));
+      if (key === 'sizes') {
+        formData.sizes.forEach(size => data.append('sizes', size));
       } else {
         data.append(key, formData[key]);
       }
+    }
+
+    console.log('FormData contents:');
+    for (let [key, value] of data.entries()) {
+      console.log(`${key}: ${value}`);
     }
 
     try {
@@ -120,10 +135,10 @@ export default function AddItems() {
         data,
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'multipart/form-data',
+        },
       });
-      setMessage(id ? "✅ Product updated successfully!" : "✅ Product added successfully!");
+      setMessage(id ? '✅ Product updated successfully!' : '✅ Product added successfully!');
       setFormData({
         name: '',
         description: '',
@@ -132,11 +147,12 @@ export default function AddItems() {
         price: '',
         discountPercentage: '',
         sizes: [],
-        bestseller: false
+        bestseller: false,
       });
       setImages([]);
       setPreviewUrls([]);
-      navigate('/admin/list-items'); // Redirect to product list after success
+      setExistingImages([]);
+      navigate('/admin/list-items');
     } catch (err) {
       console.error('❌ Axios error:', err.response?.data || err.message);
       setMessage(err.response?.data?.message || `❌ Failed to ${id ? 'update' : 'add'} product.`);
@@ -175,18 +191,36 @@ export default function AddItems() {
 
         <div className="mb-3">
           <label className="form-label">Product name</label>
-          <input type="text" className="form-control" name="name" value={formData.name} onChange={handleInputChange} required />
+          <input
+            type="text"
+            className="form-control"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+          />
         </div>
 
         <div className="mb-3">
           <label className="form-label">Product description</label>
-          <textarea className="form-control" name="description" rows="3" value={formData.description} onChange={handleInputChange} />
+          <textarea
+            className="form-control"
+            name="description"
+            rows="3"
+            value={formData.description}
+            onChange={handleInputChange}
+          />
         </div>
 
         <div className="row g-3 mb-3">
           <div className="col-md-4">
             <label className="form-label">Product category</label>
-            <select name="category" className="form-select" value={formData.category} onChange={handleInputChange}>
+            <select
+              name="category"
+              className="form-select"
+              value={formData.category}
+              onChange={handleInputChange}
+            >
               <option>Men</option>
               <option>Women</option>
               <option>Kids</option>
@@ -195,7 +229,12 @@ export default function AddItems() {
 
           <div className="col-md-4">
             <label className="form-label">Sub category</label>
-            <select name="subcategory" className="form-select" value={formData.subcategory} onChange={handleInputChange}>
+            <select
+              name="subcategory"
+              className="form-select"
+              value={formData.subcategory}
+              onChange={handleInputChange}
+            >
               <option>Topwear</option>
               <option>Bottomwear</option>
               <option>Footwear</option>
@@ -204,7 +243,14 @@ export default function AddItems() {
 
           <div className="col-md-4">
             <label className="form-label">Product Price</label>
-            <input type="number" className="form-control" name="price" value={formData.price} onChange={handleInputChange} required />
+            <input
+              type="number"
+              className="form-control"
+              name="price"
+              value={formData.price}
+              onChange={handleInputChange}
+              required
+            />
           </div>
         </div>
 
@@ -224,10 +270,8 @@ export default function AddItems() {
 
         <div className="mb-3">
           <label className="form-label d-block">Product Sizes</label>
-          <div className="btn-group" role="group
-
-">
-            {['S', 'M', 'L', 'XL', 'XXL'].map(size => (
+          <div className="btn-group">
+            {sizeOptions.map(size => (
               <button
                 type="button"
                 key={size}
@@ -241,11 +285,22 @@ export default function AddItems() {
         </div>
 
         <div className="mb-3 form-check">
-          <input type="checkbox" className="form-check-input" id="bestseller" name="bestseller" checked={formData.bestseller} onChange={handleInputChange} />
-          <label className="form-check-label" htmlFor="bestseller">Add to bestseller</label>
+          <input
+            type="checkbox"
+            className="form-check-input"
+            id="bestseller"
+            name="bestseller"
+            checked={formData.bestseller}
+            onChange={handleInputChange}
+          />
+          <label className="form-check-label" htmlFor="bestseller">
+            Add to bestseller
+          </label>
         </div>
 
-        <button type="submit" className="btn btn-dark px-4">{id ? 'Update' : 'Add'}</button>
+        <button type="submit" className="btn btn-dark px-4">
+          {id ? 'Update' : 'Add'}
+        </button>
         {message && <p className="mt-3 fw-semibold text-success">{message}</p>}
       </form>
     </div>

@@ -2,10 +2,17 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Card, Spinner, Button } from 'react-bootstrap';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import './Collection.css';
 
 const ProductGallery = () => {
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNewestFilter, setIsNewestFilter] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
@@ -29,6 +36,7 @@ const ProductGallery = () => {
           );
         }
         setProducts(allProducts);
+        setFilteredProducts(allProducts); // Initialize filtered products
         setLoading(false);
       })
       .catch(error => {
@@ -36,6 +44,26 @@ const ProductGallery = () => {
         setLoading(false);
       });
   }, [category, subcategory]);
+
+  useEffect(() => {
+    let result = [...products];
+
+    // Apply search filter
+    if (searchQuery) {
+      result = result.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply newest items filter
+    if (isNewestFilter) {
+      result = result
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)) // Sort by updatedAt descending
+        .slice(0, 10); // Take the 10 most recent
+    }
+
+    setFilteredProducts(result);
+  }, [searchQuery, products, isNewestFilter]);
 
   const handleSubcategoryClick = (sub) => {
     const params = new URLSearchParams(location.search);
@@ -67,11 +95,41 @@ const ProductGallery = () => {
     }
   };
 
+  const toggleSearchBar = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (isSearchOpen) {
+      setSearchQuery(''); // Clear search query when closing
+    }
+  };
+
+  const toggleNewestFilter = () => {
+    setIsNewestFilter(!isNewestFilter);
+  };
+
   return (
     <div className="container py-4">
-      <h2 className="text-center mb-4">
-        <span className="text-muted">Product</span> <strong>COLLECTIONS</strong>
-      </h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="text-center mb-0">
+          <span className="text-muted">Product</span> <strong>COLLECTIONS</strong>
+        </h2>
+        <div className="search-container">
+          <FontAwesomeIcon
+            icon={faSearch}
+            className="search-icon"
+            onClick={toggleSearchBar}
+            style={{ cursor: 'pointer', fontSize: '1.5rem' }}
+          />
+          {isSearchOpen && (
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          )}
+        </div>
+      </div>
       <div className="row">
         {pathname !== '/' && (
           <div className="col-md-3 mb-4">
@@ -101,6 +159,12 @@ const ProductGallery = () => {
               >
                 Bottomwear
               </button>
+              <button
+                className={`btn btn-outline-primary text-start ${isNewestFilter ? 'active' : ''}`}
+                onClick={toggleNewestFilter}
+              >
+                Newest Items
+              </button>
             </div>
           </div>
         )}
@@ -109,11 +173,11 @@ const ProductGallery = () => {
             <div className="text-center my-5">
               <Spinner animation="border" variant="primary" />
             </div>
-          ) : products.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center text-muted">No products found.</div>
           ) : (
             <div className="row">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <div key={product._id} className="col-md-4 mb-4">
                   <Card className="h-100 shadow-sm">
                     <Card.Img
@@ -141,7 +205,7 @@ const ProductGallery = () => {
                       <Card.Text>Reviews: {product.reviewCount || 0}</Card.Text>
                       <Button
                         variant="dark"
-                        className="rounded-pill mt-2"
+                        className="rounded-pill mt-2 add-card-custom"
                         onClick={() => handleAddToCart(product._id)}
                       >
                         Add to Cart

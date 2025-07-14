@@ -15,10 +15,10 @@ const About = () => {
     AOS.init({ duration: 1000, once: true });
   }, []);
   const teamMembers = [
-    { img: team1, name: 'Ahmad Azhar', role: 'Team Lead' },
-    { img: team2, name: 'Sarah Ali', role: 'Frontend Developer' },
-    { img: team3, name: 'Usman Tariq', role: 'Backend Developer' },
-    { img: team4, name: 'Hina Raza', role: 'QA Engineer' },
+    { img: team1, name: 'Talha Saleemi', role: 'Team Lead' },
+    { img: team2, name: 'Ahmad Azhar', role: 'Frontend Developer' },
+    { img: team3, name: 'Safi ullah', role: 'Backend Developer' },
+    { img: team4, name: 'Ali Ahmad', role: 'QA Engineer' },
   ];
   return (
     <div className="container py-5">

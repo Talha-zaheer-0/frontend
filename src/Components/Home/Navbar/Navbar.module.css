@@ -1,69 +1,47 @@
-.main {
-  display: flex;
-  align-items: center;
+.navbar {
+  position: relative;
+  width: 100%;
+  z-index: 1000;
+  padding: 0;
+  margin: 0;
 }
 
-.buttons {
-  display: flex;
-  gap: 10px;
+.navbar.fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
-.button_pair {
-  display: flex;
-  align-items: center;
+.navbar .container {
+  padding: 0;
+  margin: 0;
 }
 
-.btn {
-  display: flex;
+.navbar-brand {
+  margin: 0;
 }
 
-.button3 {
-  background: #ff6a00;
-  color: #fff;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: bold;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
+.navbar-brand img.logo {
+  width: 120px;
+  height: auto;
 }
 
-.button3:hover {
-  background: #e55a00;
+.navbar-nav {
+  margin: 0;
 }
 
-.button_text {
-  font-size: 14px;
+.navbar-nav .nav-link {
+  font-size: 1rem;
+  padding: 0;
+  margin: 0;
 }
 
-.profile-circle {
-  text-decoration: none;
-}
-
-.navbar .btn-outline-dark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.navbar .btn-outline-dark:hover {
-  background: #f8f9fa;
-}
-
-.navbar .btn-outline-dark .bi-bag {
-  margin-right: 4px;
-}
-
-/* Dropdown Styles */
 .navbar-nav .dropdown-toggle {
   font-weight: bold;
   color: #333;
   cursor: pointer;
+  padding: 0;
+  margin: 0;
 }
 
 .navbar-nav .dropdown-toggle:hover {
@@ -75,6 +53,8 @@
   border-radius: 0.25rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   min-width: 150px;
+  margin: 0;
+  padding: 0;
 }
 
 .dropdown-item {
@@ -93,7 +73,31 @@
   color: #007bff;
 }
 
-/* From Uiverse.io by Julian956 */ 
+.navbar .btn-outline-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.navbar .btn-outline-dark:hover {
+  background: #f8f9fa;
+}
+
+.navbar .btn-dark {
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.profile-circle {
+  text-decoration: none;
+}
+
 .btn-cart {
   display: flex;
   align-items: center;
@@ -104,6 +108,8 @@
   border: none;
   background-color: transparent;
   position: relative;
+  padding: 0;
+  margin: 0;
 }
 
 .btn-cart::after {
@@ -147,4 +153,42 @@
 
 .quantity {
   display: none;
+}
+.logo {
+  width: 50px;
+  height: auto;
+}
+@media (max-width: 768px) {
+  .navbar-brand img.logo {
+    width: 100px;
+  }
+
+  .navbar-nav .nav-link,
+  .navbar-nav .dropdown-toggle {
+    font-size: 0.9rem;
+  }
+
+  .navbar .btn-outline-dark,
+  .navbar .btn-dark {
+    font-size: 12px;
+  }
+
+  .btn-cart {
+    width: 40px;
+    height: 40px;
+  }
+
+  .icon-cart {
+    width: 20px;
+    height: 24px;
+  }
+
+  .dropdown-menu {
+    min-width: 120px;
+  }
+
+  .dropdown-item {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
 }

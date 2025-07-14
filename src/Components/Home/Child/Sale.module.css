@@ -1,63 +1,118 @@
-.wrapper {
-  width: 100%;
-  height: 400px;
+.carouselContainer {
   position: relative;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
-}
-
-.inner {
-  --w: 250px;
-  --h: 160px;
-  --translateZ: calc((var(--w) + var(--h)) + 0px);
-  --rotateX: -4deg;
-  --perspective: 1000px;
-  position: absolute;
-  width: var(--w);
-  height: var(--h);
-  top: 25%;
-  left: calc(50% - (var(--w) / 2) - 2.5px);
-  z-index: 2;
-  transform-style: preserve-3d;
-  transform: perspective(var(--perspective));
-  animation: rotating 20s linear infinite;
-}
-
-@keyframes rotating {
-  from {
-    transform: perspective(var(--perspective)) rotateX(var(--rotateX)) rotateY(0);
-  }
-  to {
-    transform: perspective(var(--perspective)) rotateX(var(--rotateX)) rotateY(0.5turn);
-  }
-}
-
-.card {
-  position: absolute;
-  border: 2px solid rgba(var(--color-card));
-  border-radius: 12px;
-  overflow: hidden;
-  inset: 0;
-  transform: rotateY(calc((360deg / var(--quantity)) * var(--index))) translateZ(var(--translateZ));
-  background: #fff;
-}
-
-.img {
   width: 100%;
-  height: 60%;
-  object-fit: cover;
-  background: #0000 radial-gradient(
-    circle,
-    rgba(var(--color-card), 0.2) 0%,
-    rgba(var(--color-card), 0.6) 80%,
-    rgba(var(--color-card), 0.9) 100%
-  );
+  max-width: 900px; /* Adjusted for container (835px + padding) */
+  margin: 0 auto;
+  padding: 0;
 }
 
-.card-body {
-  padding: 0px;
-  text-align: center;
+.carousel {
+  display: flex;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  width: 100%;
+  height: 350px; /* Maintained height */
+  transition: transform 0.5s ease-in-out; /* Smooth animation for transform */
+}
+
+.carouselRow {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  transition: transform 0.5s ease-in-out; /* Smooth sliding animation */
+}
+
+.carouselItem {
+  flex: 0 0 auto;
+  width: 835px; /* Maintained width (435px + 200px left + 200px right) */
+  height: 100%;
+  margin-right: 30px; /* Maintain gutter for smooth scrolling */
+  position: relative;
+  visibility: hidden; /* Hide all items by default */
+  opacity: 0;
+  transition: visibility 0s linear 0.5s, opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+  transform: scale(0.95);
+}
+
+.carouselItem.active {
+  visibility: visible; /* Show only the active item */
+  opacity: 1;
+  transform: scale(1); /* Full size for active item */
+}
+
+.carouselImage {
+  width: 90%; /* 60% of original size */
+  height: 90%; /* 60% of original size */
+  object-fit: contain; /* Show complete image without stretching */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Match original shadow */
+  transition: transform 0.3s ease-in-out; /* Smooth image hover effect */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the image */
+}
+
+.carouselItem.active .carouselImage:hover {
+  transform: translate(-50%, -50%) scale(1.1); /* Larger scale on hover, maintaining centering */
+}
+
+.discountOverlay {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background-color: rgba(255, 0, 0, 0.8);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  animation: pulse 2s infinite; /* Pulsing animation for discount */
+}
+
+.carouselIndicators {
+  display: flex;
+  justify-content: center;
+  margin-top: 7px;
+  gap: 2px;
+}
+
+.indicatorDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #c0c0c0;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.indicatorDot.activeDot {
+  background-color: #000000; /* Primary color for active dot */
+  width: 17px;
+  height: 17px; /* Slightly larger for active dot */
+
+}
+
+.indicatorDot:hover {
+  background-color: #075cb6; /* Darker shade on hover */
+  width: 20px;
+  height: 20px; /* Slightly larger on hover */
+}
+
+/* Pulsing animation for discount badge */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

@@ -88,7 +88,7 @@ const MensClothingGallery = () => {
                       {item.discountPercentage > 0 && (
                         <Card.Text className="text-success">{item.discountPercentage}% Off</Card.Text>
                       )}
-                      <Card.Text>Reviews: {item.reviewCount || 0}</Card.Text>
+                      {/* <Card.Text>Reviews: {item.reviewCount || 0}</Card.Text> */}
                     </div>
                     <Button
                       variant="dark"
