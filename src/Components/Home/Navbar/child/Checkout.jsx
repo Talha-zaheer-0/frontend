@@ -3,9 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../AuthContext';
 import axios from 'axios';
 import { Spinner } from 'react-bootstrap';
-import './style.css'; // Assuming you have a CSS file for styling
+import styles from './Checkout.module.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Notification from '../../Notification';
 
-const Checkout = () => {
+const Checkout = ({ socket }) => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -20,6 +22,9 @@ const Checkout = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -27,6 +32,7 @@ const Checkout = () => {
         const token = localStorage.getItem('token');
         if (!token) {
           console.warn('No token found, redirecting to login');
+          setMessage('Please log in to proceed with checkout.');
           setLoading(false);
           navigate('/login');
           return;
@@ -45,12 +51,43 @@ const Checkout = () => {
           response: err.response?.data,
           status: err.response?.status
         });
-        alert('Failed to fetch cart. Please try again.');
+        setNotificationMessage('Failed to fetch cart. Please try again.');
+        setShowNotification(true);
         setLoading(false);
       }
     };
     fetchCart();
-  }, [selectedProductIds, navigate]);
+
+    const userId = localStorage.getItem('userId');
+    if (userId && socket) {
+      socket.on('cartUpdate', (updatedCart) => {
+        console.log('Received cart update via Socket.IO:', updatedCart);
+        const filteredItems = updatedCart.items.filter(item => 
+          selectedProductIds.includes(item.productId?._id)
+        );
+        setCart({ ...updatedCart, items: filteredItems });
+      });
+      socket.on('orderUpdate', (order) => {
+        console.log('Received order update via Socket.IO:', order);
+        if (order) {
+          setNotificationMessage('Order placed successfully! Redirecting...');
+          setShowNotification(true);
+          setTimeout(() => navigate('/order-confirmation'), 2000);
+        }
+      });
+      socket.on('connect_error', (err) => {
+        console.error('Socket.IO connection error:', err.message);
+      });
+    }
+
+    return () => {
+      if (userId && socket) {
+        socket.off('cartUpdate');
+        socket.off('orderUpdate');
+        socket.off('connect_error');
+      }
+    };
+  }, [selectedProductIds, navigate, socket]);
 
   useEffect(() => {
     if (user) {
@@ -115,7 +152,6 @@ const Checkout = () => {
           data: response.data
         });
 
-        // Prepare and send order confirmation email
         const items = cart.items.map(item => {
           const price = (item.productId?.price || 0) * (1 - (item.productId?.discountPercentage || 0) / 100);
           return {
@@ -136,7 +172,7 @@ const Checkout = () => {
             total: calculateTotal()
           });
           await axios.post(
-            'http://localhost:5000/api/auth/order-confirmation',
+            'http://localhost:5000/api/email/order-confirmation',
             {
               userName: formData.name,
               userEmail: formData.email,
@@ -155,12 +191,12 @@ const Checkout = () => {
             status: emailErr.response?.status,
             stack: emailErr.stack
           });
-          // Continue to order confirmation page even if email fails
         }
 
         localStorage.setItem('hasOrdered', 'true');
-        alert('Order placed successfully!');
-        navigate('/order-confirmation');
+        setNotificationMessage('Order placed successfully! Redirecting...');
+        setShowNotification(true);
+        setTimeout(() => navigate('/order-confirmation'), 2000);
       } catch (err) {
         console.error('Error during checkout:', {
           message: err.message,
@@ -168,13 +204,11 @@ const Checkout = () => {
           status: err.response?.status,
           selectedProductIds
         });
-        alert(`Failed to place order: ${err.response?.data?.message || err.message || 'Server error'}`);
+        setNotificationMessage(`Failed to place order: ${err.response?.data?.message || err.message || 'Server error'}`);
+        setShowNotification(true);
         if (err.response?.status === 401) {
           localStorage.removeItem('token');
           navigate('/login');
-        } else {
-          console.log('Falling back to order history page');
-          navigate('/order-confirmation');
         }
       } finally {
         setSubmitting(false);
@@ -183,123 +217,175 @@ const Checkout = () => {
   };
 
   return (
-    <div className="container py-5" style={{ maxWidth: '800px' }}>
-      <h2 className="mb-4 text-center">Checkout</h2>
+    <div className={styles.container}>
+      <h2 className={`${styles.textCenter} ${styles.mb4} ${styles.textGray800} ${styles.fontBold}`}>
+        Checkout
+      </h2>
+      {message && (
+        <div className={`${styles.message} ${styles.mb4} ${styles.textCenter} ${message.includes('Failed') ? 'text-danger' : 'text-success'}`}>
+          {message}
+        </div>
+      )}
       {loading ? (
-        <div className="text-center my-5">
-          <Spinner animation="border" variant="primary" />
+        <div className={`${styles.textCenter} ${styles.my5}`}>
+          <Spinner animation="border" variant="primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
         </div>
       ) : cart.items.length === 0 ? (
-        <div className="card p-4 text-center">
-          <p>No items selected for checkout.</p>
+        <div className={styles.card}>
+          <p className={`${styles.textGray800} ${styles.textCenter}`}>No items selected for checkout.</p>
           <button
-            className="btn btn-dark rounded-pill"
+            className={`${styles.btnDark} ${styles.roundedPill} ${styles.w100}`}
             onClick={() => navigate('/cart')}
           >
             Back to Cart
           </button>
         </div>
       ) : (
-        <>
-          <div className="mb-4">
-            <h4 className="mb-3">Selected Items</h4>
-            {cart.items.map((item) => (
-              <div key={item.productId?._id} className="d-flex align-items-center mb-3 border-bottom pb-3">
-                <img
-                  src={item.productId?.images?.[0] || 'https://via.placeholder.com/80x80?text=No+Image'}
-                  alt={item.productId?.name || 'Product'}
-                  className="w-20 h-20 object-contain rounded me-3 order-item-img"
-                  style={{ maxWidth: '80px !important', maxHeight: '80px !important' }}
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/80x80?text=No+Image';
-                  }}
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">{item.productId?.name}</p>
-                  <p className="text-gray-600">
-                    ${item.productId?.price?.toFixed(2)}
-                    {item.productId?.discountPercentage > 0 && (
-                      <span className="text-success ms-2">
-                        ({item.productId?.discountPercentage}% off)
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-gray-600">Quantity: {item.quantity}</p>
-                  <p className="text-gray-800 font-semibold">
-                    Subtotal: ${(item.productId?.price * (1 - (item.productId?.discountPercentage || 0) / 100) * item.quantity).toFixed(2)}
-                  </p>
+        <div className="row g-4">
+          <div className="col-lg-6">
+            <div className={styles.formContainer}>
+              <h4 className={`${styles.mb3} ${styles.textGray800} ${styles.fontSemibold}`}>
+                Shipping Information
+              </h4>
+              <form onSubmit={handleSubmit} noValidate>
+                <div className={styles.mb3}>
+                  <label htmlFor="name" className={styles.formLabel}>Full Name</label>
+                  <input
+                    type="text"
+                    className={`${styles.formControl} ${errors.name ? styles.formControlInvalid : ''}`}
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    disabled={!!user?.name}
+                  />
+                  {errors.name && <div className={styles.invalidFeedback}>{errors.name}</div>}
                 </div>
-              </div>
-            ))}
-            <div className="text-end mb-4">
-              <p className="text-xl font-bold text-gray-800">Total: ${calculateTotal()}</p>
+                <div className={styles.mb3}>
+                  <label htmlFor="email" className={styles.formLabel}>Email Address</label>
+                  <input
+                    type="email"
+                    className={`${styles.formControl} ${errors.email ? styles.formControlInvalid : ''}`}
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={!!user?.email}
+                  />
+                  {errors.email && <div className={styles.invalidFeedback}>{errors.email}</div>}
+                </div>
+                <div className={styles.mb3}>
+                  <label htmlFor="address" className={styles.formLabel}>Delivery Address</label>
+                  <textarea
+                    className={`${styles.formControl} ${errors.address ? styles.formControlInvalid : ''}`}
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    rows="4"
+                    placeholder="Enter your delivery address"
+                  />
+                  {errors.address && <div className={styles.invalidFeedback}>{errors.address}</div>}
+                </div>
+                <div className={styles.mb3}>
+                  <label htmlFor="phone" className={styles.formLabel}>Phone Number</label>
+                  <input
+                    type="tel"
+                    className={`${styles.formControl} ${errors.phone ? styles.formControlInvalid : ''}`}
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Enter your phone number"
+                  />
+                  {errors.phone && <div className={styles.invalidFeedback}>{errors.phone}</div>}
+                </div>
+                <button
+                  type="submit"
+                  className={`${styles.btnDark} ${styles.w100} ${styles.roundedPill} ${styles.dFlex} ${styles.alignItemsCenter} ${styles.justifyContentCenter}`}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                        className={styles.spinnerBorder}
+                      />
+                      Processing...
+                    </>
+                  ) : (
+                    'Place Order'
+                  )}
+                </button>
+              </form>
             </div>
           </div>
-          <h4>Delivery charges Apply</h4>
-          <p className='mb-3 font-semibold text-xl'>Cash on Delivery</p>
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="mb-3">
-              <label htmlFor="name" className="form-label">Full Name</label>
-              <input
-                type="text"
-                className={`form-control ${errors.name ? 'is-invalid' : ''}`}
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                disabled={!!user?.name}
-              />
-              {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+          <div className="col-lg-6">
+            <div className={styles.orderSummary}>
+              <h4 className={`${styles.mb3} ${styles.textGray800} ${styles.fontSemibold}`}>
+                Order Summary
+              </h4>
+              {cart.items.map((item) => (
+                <div
+                  key={item.productId?._id}
+                  className={`${styles.dFlex} ${styles.alignItemsCenter} ${styles.mb3} ${styles.borderBottom} ${styles.pb3}`}
+                >
+                  <img
+                    src={item.productId?.images?.[0] || 'https://via.placeholder.com/100x100?text=No+Image'}
+                    alt={item.productId?.name || 'Product'}
+                    className={styles.orderItemImg}
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/100x100?text=No+Image';
+                    }}
+                  />
+                  <div className={`${styles.flex1} ms-3`}>
+                    <p className={`${styles.fontMedium} ${styles.textGray800}`}>
+                      {item.productId?.name}
+                    </p>
+                    <p className={styles.textGray600}>
+                      ${item.productId?.price?.toFixed(2)}
+                      {item.productId?.discountPercentage > 0 && (
+                        <span className="text-success ms-2">
+                          ({item.productId?.discountPercentage}% off)
+                        </span>
+                      )}
+                    </p>
+                    <p className={styles.textGray600}>Quantity: {item.quantity}</p>
+                    <p className={`${styles.textGray800} ${styles.fontSemibold}`}>
+                      Subtotal: ${(item.productId?.price * (1 - (item.productId?.discountPercentage || 0) / 100) * item.quantity).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <div className={`${styles.textEnd} ${styles.mb3}`}>
+                <p className={`${styles.textXl} ${styles.fontBold} ${styles.textGray800}`}>
+                  Total: ${calculateTotal()}
+                </p>
+              </div>
+              <div className={styles.mb3}>
+                <p className={`${styles.fontSemibold} ${styles.textGray800}`}>
+                  Delivery Charges: <span className="text-muted">TBD at checkout</span>
+                </p>
+                <p className={`${styles.fontSemibold} ${styles.textGray800}`}>
+                  Payment Method: <span className="text-muted">Cash on Delivery</span>
+                </p>
+              </div>
             </div>
-            <div className="mb-3">
-              <label htmlFor="email" className="form-label">Email Address</label>
-              <input
-                type="email"
-                className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={!!user?.email}
-              />
-              {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-            </div>
-            <div className="mb-3">
-              <label htmlFor="address" className="form-label">Delivery Address</label>
-              <textarea
-                className={`form-control ${errors.address ? 'is-invalid' : ''}`}
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                rows="3"
-                placeholder="Enter your delivery address"
-              />
-              {errors.address && <div className="invalid-feedback">{errors.address}</div>}
-            </div>
-            <div className="mb-3">
-              <label htmlFor="phone" className="form-label">Phone Number</label>
-              <input
-                type="tel"
-                className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="Enter your phone number"
-              />
-              {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
-            </div>
-            <button
-              type="submit"
-              className="btn btn-dark w-100 rounded-pill"
-              disabled={submitting}
-            >
-              {submitting ? <Spinner animation="border" size="sm" /> : 'Place Order'}
-            </button>
-          </form>
-        </>
+          </div>
+        </div>
       )}
+      <Notification 
+        show={showNotification} 
+        message={notificationMessage} 
+        variant={notificationMessage.includes('Failed') ? 'danger' : 'success'}
+        onClose={() => setShowNotification(false)} 
+      />
     </div>
   );
 };

@@ -81,7 +81,7 @@
 .indicatorDot {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 5%;
   background-color: #c0c0c0;
   border: none;
   cursor: pointer;
@@ -92,7 +92,6 @@
   background-color: #000000; /* Primary color for active dot */
   width: 17px;
   height: 17px; /* Slightly larger for active dot */
-
 }
 
 .indicatorDot:hover {
@@ -114,5 +113,91 @@
   100% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 992px) { /* Tablet */
+  .carouselContainer {
+    max-width: 700px;
+  }
+  .carouselItem {
+    width: 650px;
+  }
+  .carouselImage {
+    width: 80%;
+    height: 80%;
+  }
+  .discountOverlay {
+    top: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    font-size: 1.2rem;
+  }
+  .indicatorDot {
+    width: 6px;
+    height: 6px;
+  }
+  .indicatorDot.activeDot {
+    width: 15px;
+    height: 15px;
+  }
+  .indicatorDot:hover {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 768px) { /* Tablet (smaller) */
+  .carouselContainer {
+    max-width: 500px;
+  }
+  .carouselItem {
+    width: 450px;
+  }
+  .carouselImage {
+    width: 70%;
+    height: 70%;
+  }
+  .discountOverlay {
+    top: 15px;
+    right: 15px;
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) { /* Mobile */
+  .carouselContainer {
+    max-width: 300px;
+  }
+  .carousel {
+    height: 250px;
+  }
+  .carouselItem {
+    width: 280px;
+    margin-right: 20px;
+  }
+  .carouselImage {
+    width: 60%;
+    height: 60%;
+  }
+  .discountOverlay {
+    top: 10px;
+    right: 10px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+  .indicatorDot {
+    width: 5px;
+    height: 5px;
+  }
+  .indicatorDot.activeDot {
+    width: 12px;
+    height: 12px;
+  }
+  .indicatorDot:hover {
+    width: 14px;
+    height: 14px;
   }
 }

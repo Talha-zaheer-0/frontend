@@ -6,11 +6,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCar } from '@fortawesome/free-solid-svg-icons';
 import './OrderConfirmation.css';
 
-const OrderConfirmation = () => {
+const OrderConfirmation = ({ socket }) => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAllItems, setShowAllItems] = useState({});
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -39,7 +40,39 @@ const OrderConfirmation = () => {
       }
     };
     fetchOrders();
-  }, []);
+
+    const userId = localStorage.getItem('userId');
+    if (userId && socket) {
+      socket.on('orderUpdate', (updatedOrder) => {
+        console.log('Received order update via Socket.IO:', updatedOrder);
+        if (updatedOrder) {
+          setOrders(prevOrders => {
+            const index = prevOrders.findIndex(o => o.orderId === updatedOrder.orderId);
+            if (index !== -1) {
+              const newOrders = [...prevOrders];
+              newOrders[index] = updatedOrder;
+              return newOrders;
+            } else {
+              return [updatedOrder, ...prevOrders];
+            }
+          });
+        } else {
+          // Handle order deletion
+          setOrders(prevOrders => prevOrders.filter(o => o.orderId !== updatedOrder?.orderId));
+        }
+      });
+      socket.on('connect_error', (err) => {
+        console.error('Socket.IO connection error:', err.message);
+      });
+    }
+
+    return () => {
+      if (userId && socket) {
+        socket.off('orderUpdate');
+        socket.off('connect_error');
+      }
+    };
+  }, [socket]);
 
   const toggleShowItems = (orderId) => {
     setShowAllItems((prev) => ({
@@ -48,9 +81,30 @@ const OrderConfirmation = () => {
     }));
   };
 
+  const deleteOrder = async (orderId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:5000/api/products/orders/user/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOrders(orders.filter(order => order.orderId !== orderId));
+      setMessage(`Order ${orderId} deleted successfully.`);
+    } catch (err) {
+      console.error('❌ Delete Order Error:', err.response?.data || err.message);
+      setMessage(err.response?.data?.message || `❌ Failed to delete order ${orderId}.`);
+    }
+  };
+
+  const handleContactClick = () => {
+    const ownerPhone = '+923176511871';
+    const whatsappUrl = `https://wa.me/${ownerPhone}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const getStatusPosition = (status) => {
     switch (status?.toLowerCase()) {
       case 'order placed':
+      case 'pending':
         return 0;
       case 'processing':
         return 25;
@@ -92,6 +146,11 @@ const OrderConfirmation = () => {
   return (
     <div className="container mx-auto py-10 px-4 sm:px-6 lg:px-8 max-w-4xl order-confirmation">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">Your Orders</h2>
+      {message && (
+        <p className={`mb-4 ${message.includes('Failed') ? 'text-danger' : 'text-success'}`}>
+          {message}
+        </p>
+      )}
       {orders.map((order) => (
         <div key={order.orderId} className="bg-white p-6 rounded-lg shadow-md mb-6">
           <table className="order-table color">
@@ -101,7 +160,9 @@ const OrderConfirmation = () => {
                 <th>Delivery Address</th>
                 <th>Phone</th>
                 <th>Status</th>
+                <th>Tracking ID</th>
                 <th>Total</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -110,7 +171,18 @@ const OrderConfirmation = () => {
                 <td>{order.deliveryAddress || 'N/A'}</td>
                 <td>{order.phone || 'N/A'}</td>
                 <td>{order.status || 'Pending'}</td>
+                <td>{order.trackingId || 'N/A'}</td>
                 <td>${(order.totalAmount || 0).toFixed(2)}</td>
+                <td>
+                  {order.status === 'Delivered' && (
+                    <button
+                      className="btn btn-success btn-sm"
+                      onClick={() => deleteOrder(order.orderId)}
+                    >
+                      Order Completed
+                    </button>
+                  )}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -177,6 +249,11 @@ const OrderConfirmation = () => {
           </div>
         </div>
       ))}
+      {orders.length > 0 && (
+        <div className="contact-icon" onClick={handleContactClick} title="Contact Owner via WhatsApp">
+          <img className='logo5' src="/whatsApp.png" alt="WhatsApp Contact"  title='onwner contact'/>
+        </div>
+      )}
       <button
         onClick={() => navigate('/')}
         className="bg-dark text-white rounded pill px-4 py-2 mt-4 hover:bg-primary transition duration-300"

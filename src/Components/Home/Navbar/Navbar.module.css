@@ -1,115 +1,295 @@
 .navbar {
-  position: relative;
+  position: fixed;
   width: 100%;
   z-index: 1000;
-  padding: 0;
-  margin: 0;
-}
-
-.navbar.fixed {
-  position: fixed;
   top: 0;
   left: 0;
+  margin: 0;
+  padding: 0;
+  background: #026D81 !important;
+  transition: all 0.3s ease;
+}
+
+.navbar.transparent {
+  background-color: #026D81;
+  z-index: 999 !important;
+  box-shadow: none !important;
 }
 
 .navbar .container {
-  padding: 0;
-  margin: 0;
+  margin: 0 auto;
+  max-width: 1400px;
+}
+
+.logo {
+  width: 50px !important;
+  margin-left: 30px;
+}
+
+.logo1 {
+  width: 80px !important;
 }
 
 .navbar-brand {
   margin: 0;
+  font-size: 1.8rem;
+  transition: transform 0.2s ease;
 }
 
-.navbar-brand img.logo {
-  width: 120px;
-  height: auto;
+.navbar-brand:hover {
+  transform: scale(1.05);
+}
+
+.navbar-brand img.logo:hover {
+  opacity: 0.9;
+}
+
+.navbar-collapse {
+  flex-grow: 1;
 }
 
 .navbar-nav {
   margin: 0;
+  gap: 2rem;
 }
 
 .navbar-nav .nav-link {
-  font-size: 1rem;
-  padding: 0;
-  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #ffffff;
+  text-transform: uppercase;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #e0e0e0;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
 .navbar-nav .dropdown-toggle {
-  font-weight: bold;
-  color: #333;
+  font-weight: 600;
+  color: #ffffff;
   cursor: pointer;
-  padding: 0;
-  margin: 0;
+  padding: 0.5rem 1rem;
+  transition: color 0.2s ease;
 }
 
 .navbar-nav .dropdown-toggle:hover {
-  color: #007bff;
+  color: #e0e0e0;
+}
+
+.navbar.transparent .navbar-nav .nav-link,
+.navbar.transparent .navbar-nav .dropdown-toggle {
+  color: #1f2937;
+}
+
+.navbar.transparent .navbar-nav .nav-link:hover,
+.navbar.transparent .navbar-nav .dropdown-toggle:hover {
+  color: #2563eb;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .dropdown-menu {
   border: none;
-  border-radius: 0.25rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  min-width: 150px;
-  margin: 0;
-  padding: 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  padding: 0.5rem 0;
+  background: #ffffff;
 }
 
 .dropdown-item {
   font-size: 1rem;
-  color: #333;
-  padding: 0.5rem 1rem;
+  color: #374151;
+  padding: 0.5rem 1.25rem;
   background: none;
   border: none;
   width: 100%;
   text-align: left;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .dropdown-item:hover {
-  background: #f8f9fa;
-  color: #007bff;
+  background: #f1f5f9;
+  color: #2563eb;
+}
+
+.navbar-actions {
+  gap: 1.5rem;
 }
 
 .navbar .btn-outline-dark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  margin: 0;
-  font-size: 14px;
-  font-weight: bold;
+  padding: 0.5rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 1px solid #ffffff;
+  border-radius: 999px;
+  color: #ffffff;
+  transition: all 0.2s ease;
 }
 
 .navbar .btn-outline-dark:hover {
-  background: #f8f9fa;
+  background: #ffffff;
+  color: #026D81;
+}
+
+.navbar.transparent .btn-outline-dark {
+  border: 1px solid #1f2937;
+  color: #1f2937;
+}
+
+.navbar.transparent .btn-outline-dark:hover {
+  background: #1f2937;
+  color: #ffffff;
 }
 
 .navbar .btn-dark {
-  padding: 0;
-  margin: 0;
-  font-size: 14px;
-  font-weight: bold;
+  padding: 0.5rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: #1f2937;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.navbar .btn-dark:hover {
+  background: #111827;
+}
+
+.btn-admin {
+  padding: 0.5rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+.btn-admin:hover {
+  background: linear-gradient(90deg, #1d4ed8, #2563eb);
+}
+
+.btn-login {
+  border-color: #ffffff;
+  background: transparent !important;
+  color: #ffffff;
+}
+
+.btn-login:hover {
+  background: #ffffff;
+  color: #026D81;
+}
+
+.navbar.transparent .btn-login {
+  border-color: #1f2937;
+  color: #1f2937;
+}
+
+.navbar.transparent .btn-login:hover {
+  background: #1f2937;
+  color: #ffffff;
+}
+
+.btn-signup {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-signup:hover {
+  background: #1d4ed8;
+}
+
+.btn-logout {
+  border-color: #dc2626;
+  background: transparent !important;
+  color: #dc2626;
+}
+
+.btn-logout:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.navbar.transparent .btn-logout {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.navbar.transparent .btn-logout:hover {
+  background: #dc2626;
+  color: #ffffff;
 }
 
 .profile-circle {
   text-decoration: none;
 }
 
+.profile-initials {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e98c4b, #f59e0b);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.profile-initials:hover {
+  transform: scale(1.1);
+}
+
 .btn-cart {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
+  width: 55px;
+  height: 45px;
+  border-radius: 12px;
   border: none;
-  background-color: transparent;
+  background: transparent;
   position: relative;
-  padding: 0;
-  margin: 0;
+  transition: all 0.2s ease;
+}
+
+.btn1 {
+  background: transparent;
+  background-color: rgba(47, 98, 145, 0.8);
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 14px;
+}
+
+.btn1::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #2563eb;
+  transition: width 0.3s ease;
+}
+
+.btn1:hover::after {
+  width: 100%;
+}
+
+.btn-cart:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .btn-cart::after {
@@ -117,50 +297,190 @@
   width: fit-content;
   height: fit-content;
   position: absolute;
-  font-size: 15px;
-  color: white;
-  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #dc2626;
+  border-radius: 10px;
+  padding: 2px 6px;
+  top: -8px;
+  right: -8px;
   opacity: 0;
   visibility: hidden;
-  transition: .2s linear;
-  top: 115%;
+  transition: all 0.2s ease;
+  z-index: 10; /* Ensure badge is above other elements */
+}
+
+/* Show badge when data-quantity is non-zero (for testing) */
+.btn-cart[data-quantity]:not([data-quantity="0"])::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Optional: Uncomment to revert to hover-only behavior after testing */
+/*
+.btn-cart[data-quantity]:not([data-quantity="0"]):hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+*/
+
+.btn-cart:hover::after {
+  background: #b91c1c;
 }
 
 .icon-cart {
-  width: 24.38px;
-  height: 30.52px;
-  transition: .2s linear;
+  width: 30px;
+  height: 30px;
+  transition: transform 0.2s ease;
 }
 
 .icon-cart path {
-  fill: rgb(240, 8, 8);
-  transition: .2s linear;
+  fill: #ffffff;
+}
+
+.navbar.transparent .icon-cart path {
+  fill: #1f2937;
 }
 
 .btn-cart:hover > .icon-cart {
-  transform: scale(1.2);
+  transform: scale(1.15);
 }
 
 .btn-cart:hover > .icon-cart path {
-  fill: rgb(186, 34, 233);
+  fill: #e0e0e0;
 }
 
-.btn-cart:hover::after {
-  visibility: visible;
-  opacity: 1;
-  top: 105%;
+.navbar.transparent .btn-cart:hover > .icon-cart path {
+  fill: #2563eb;
 }
 
-.quantity {
+.search-icon {
+  cursor: pointer;
+  color: #ffffff;
+}
+
+.navbar.transparent .search-icon {
+  color: #1f2937;
+}
+
+.search-icon:hover {
+  color: #e0e0e0;
+}
+
+.navbar.transparent .search-icon:hover {
+  color: #2563eb;
+}
+
+.cart-count {
   display: none;
 }
-.logo {
-  width: 50px;
-  height: auto;
+
+/* Debug span for cart count */
+.debug-cart-count {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #000;
+  color: #fff;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
-@media (max-width: 768px) {
-  .navbar-brand img.logo {
-    width: 100px;
+
+@media (max-width: 991px) {
+  .navbar {
+    margin: 0;
+    padding: 0;
+  }
+
+  .navbar-nav {
+    text-align: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .navbar-nav .nav-link,
+  .navbar-nav .dropdown-toggle {
+    font-size: 1rem;
+    padding: 0.5rem;
+  }
+
+  .navbar-actions {
+    justify-content: center;
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+
+  .btn-login,
+  .btn-signup,
+  .btn-logout,
+  .btn-admin {
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .btn-cart {
+    width: 45px;
+    height: 35px;
+  }
+
+  .btn-cart::after {
+    font-size: 0.7rem;
+    padding: 1px 5px;
+    top: -6px;
+    right: -6px;
+  }
+
+  .debug-cart-count {
+    font-size: 0.7rem;
+    padding: 1px 5px;
+    top: -6px;
+    right: -6px;
+  }
+
+  .icon-cart {
+    width: 25px;
+    height: 25px;
+  }
+
+  .profile-initials {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .dropdown-menu {
+    min-width: 140px;
+    padding: 0.25rem 0;
+  }
+
+  .dropdown-item {
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+  }
+
+  .logo {
+    width: 40px !important;
+  }
+
+  .logo1 {
+    width: 60px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .navbar-brand {
+    font-size: 1.5rem;
+  }
+
+  .logo {
+    width: 35px !important;
+  }
+
+  .logo1 {
+    width: 50px !important;
   }
 
   .navbar-nav .nav-link,
@@ -168,27 +488,41 @@
     font-size: 0.9rem;
   }
 
-  .navbar .btn-outline-dark,
-  .navbar .btn-dark {
-    font-size: 12px;
+  .btn-login,
+  .btn-signup,
+  .btn-logout,
+  .btn-admin {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
   }
 
   .btn-cart {
     width: 40px;
-    height: 40px;
+    height: 30px;
+  }
+
+  .btn-cart::after {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    top: -5px;
+    right: -5px;
+  }
+
+  .debug-cart-count {
+    font-size: 0.65rem;
+    padding: 1px 4px;
+    top: -5px;
+    right: -5px;
   }
 
   .icon-cart {
     width: 20px;
-    height: 24px;
+    height: 20px;
   }
 
-  .dropdown-menu {
-    min-width: 120px;
-  }
-
-  .dropdown-item {
-    font-size: 0.9rem;
-    padding: 0.4rem 0.8rem;
+  .profile-initials {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
   }
 }

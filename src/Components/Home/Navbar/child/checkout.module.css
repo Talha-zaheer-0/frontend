@@ -1,0 +1,202 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.orderItemImg {
+  max-width: 100px !important;
+  max-height: 100px !important;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.orderItemImg:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.formLabel {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.formControl {
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.formControl:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.formControlInvalid {
+  border-color: #dc3545;
+}
+
+.invalidFeedback {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+}
+
+.btnDark {
+  background-color: #1e293b;
+  border-color: #1e293b;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btnDark:hover {
+  background-color: #334155;
+  border-color: #334155;
+  transform: translateY(-2px);
+}
+
+.roundedPill {
+  border-radius: 9999px !important;
+}
+
+.textCenter {
+  text-align: center;
+}
+
+.card {
+  border-radius: 12px;
+  border: none;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+}
+
+.textGray800 {
+  color: #1e293b;
+}
+
+.textGray600 {
+  color: #6b7280;
+}
+
+.fontMedium {
+  font-weight: 500;
+}
+
+.fontSemibold {
+  font-weight: 600;
+}
+
+.textXl {
+  font-size: 1.5rem;
+}
+
+.fontBold {
+  font-weight: 700;
+}
+
+.mb3 {
+  margin-bottom: 1rem;
+}
+
+.mb4 {
+  margin-bottom: 2rem;
+}
+
+.py5 {
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
+}
+
+.dFlex {
+  display: flex;
+}
+
+.alignItemsCenter {
+  align-items: center;
+}
+
+.justifyContentCenter {
+  justify-content: center;
+}
+
+.borderBottom {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pb3 {
+  padding-bottom: 1.5rem;
+}
+
+.textEnd {
+  text-align: right;
+}
+
+.w100 {
+  width: 100%;
+}
+
+/* Spinner styling for button */
+.btnDark .spinnerBorder {
+  margin-right: 0.75rem;
+}
+
+/* Message styling */
+.message {
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+/* Order summary container */
+.orderSummary {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Form container */
+.formContainer {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem 1rem;
+  }
+
+  .orderItemImg {
+    max-width: 80px !important;
+    max-height: 80px !important;
+  }
+
+  .btnDark {
+    font-size: 0.95rem;
+    padding: 0.6rem 1.2rem;
+  }
+
+  .textXl {
+    font-size: 1.25rem;
+  }
+
+  .formContainer,
+  .orderSummary {
+    padding: 1rem;
+  }
+}

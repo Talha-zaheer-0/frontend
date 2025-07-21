@@ -65,16 +65,45 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 768px) {
+/* Responsive Design */
+@media (max-width: 992px) { /* Tablet */
   .card {
-    width: calc(50% - 20px); /* 2 cards per line */
-    margin: 0 10px;
+    width: calc(25% - 10px); /* 4 cards per line */
+  }
+  .carouselButton {
+    font-size: 1.5rem;
+    padding: 12px 4px;
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) { /* Tablet (smaller) */
   .card {
-    width: calc(100% - 20px); /* 1 card per line */
-    margin: 0 10px;
+    width: calc(33.33% - 10px); /* 3 cards per line */
+  }
+  .carouselButton {
+    font-size: 1.2rem;
+    padding: 10px 3px;
+  }
+}
+
+@media (max-width: 576px) { /* Mobile */
+  .card {
+    width: calc(100% - 10px); /* 1 card per line */
+    margin: 0 5px;
+  }
+  .card:hover {
+    transform: none; /* Disable hover effect on mobile */
+    box-shadow: none;
+  }
+  .carouselButton {
+    font-size: 1rem;
+    padding: 8px 2px;
+    top: 40%;
+  }
+  .carouselButtonLeft {
+    left: 0;
+  }
+  .carouselButtonRight {
+    right: 0;
   }
 }

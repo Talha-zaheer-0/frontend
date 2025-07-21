@@ -1,0 +1,16 @@
+/* Ensure main content has padding to avoid overlap with fixed navbar */
+.main-content {
+  margin-top: 80px; /* Increased to ensure enough space */
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-top: 70px; /* Adjusted for smaller navbar height */
+  }
+}
+
+@media (max-width: 576px) {
+  .main-content {
+    margin-top: 65px; /* Further adjusted for smallest screens */
+  }
+}

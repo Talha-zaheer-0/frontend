@@ -1,0 +1,47 @@
+.logoCarouselContainer {
+  overflow: hidden;
+  position: relative;
+  background-color: #f8f9fa; /* Equivalent to bg-light */
+  padding: 1rem 0;
+}
+
+.logoCarouselWrapper {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 40px;
+  animation: scroll 30s linear infinite; /* Slower speed for smoother effect */
+  will-change: transform; /* Optimize performance */
+}
+
+.logoItem {
+  flex: 0 0 auto;
+  width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoImg {
+  height: 60px;
+  object-fit: contain;
+  width: 100%;
+}
+
+@keyframes scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); } /* Matches duplicated logos for seamless loop */
+}
+
+.logoCarouselWrapper:hover {
+  animation-play-state: paused; /* Optional: pause on hover */
+}
+
+@media (max-width: 768px) {
+  .logoItem {
+    width: 120px;
+  }
+
+  .logoImg {
+    height: 50px;
+  }
+}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Card, Button, Spinner } from 'react-bootstrap';
-import styles from './FeaturedProduct.module.css'; 
+import { Card, Spinner } from 'react-bootstrap';
+import styles from './FeaturedProduct.module.css';
 
-const FALLBACK_IMAGE = 'https://via.placeholder.com/250x250?text=No+Image';
+const FALLBACK_IMAGE = 'https://via.placeholder.com/200x200?text=No+Image';
 
 function FeaturedProduct() {
   const navigate = useNavigate();
@@ -67,7 +67,7 @@ function FeaturedProduct() {
     if (currentIndex > 0 && carouselRef.current) {
       const card = carouselRef.current.querySelector(`.${styles.card}`);
       if (card) {
-        const cardWidth = card.offsetWidth + 30;
+        const cardWidth = card.offsetWidth + 15;
         setCurrentIndex(prev => prev - 1);
         carouselRef.current.scrollBy({ left: -cardWidth, behavior: 'smooth' });
       }
@@ -78,7 +78,7 @@ function FeaturedProduct() {
     if (currentIndex < products.length - 4 && carouselRef.current) {
       const card = carouselRef.current.querySelector(`.${styles.card}`);
       if (card) {
-        const cardWidth = card.offsetWidth + 30;
+        const cardWidth = card.offsetWidth + 15;
         setCurrentIndex(prev => prev + 1);
         carouselRef.current.scrollBy({ left: cardWidth, behavior: 'smooth' });
       }
@@ -88,11 +88,8 @@ function FeaturedProduct() {
   return (
     <div className="container py-4">
       <h2 className="text-center mb-4">
-        <span className="text-muted">FEATURED</span> <strong>PRODUCTS</strong>
+        <span className="text-muted"><strong>Most Favorite Products</strong></span>
       </h2>
-      <p className="text-center text-muted">
-        Our most reviewed products.
-      </p>
 
       {loading ? (
         <div className="text-center my-5">
@@ -105,14 +102,14 @@ function FeaturedProduct() {
             <div className="text-center text-muted">No featured products found.</div>
           ) : (
             <>
-              <Button
-                variant="outline-dark"
+              <button
                 className={`${styles.carouselButton} ${styles.carouselButtonLeft}`}
                 onClick={scrollLeft}
                 disabled={currentIndex === 0}
+                aria-label="Previous slide"
               >
-                {"<"}
-              </Button>
+                <i className="bi bi-arrow-left-circle-fill"></i>
+              </button>
               <div className={styles.carousel} ref={carouselRef}>
                 <div className={styles.carouselRow}>
                   {products.map((item, index) => (
@@ -121,7 +118,7 @@ function FeaturedProduct() {
                         <Card.Img
                           variant="top"
                           src={item.image}
-                          style={{ height: '250px', objectFit: 'cover', cursor: 'pointer' }}
+                          style={{ height: '200px', objectFit: 'cover', cursor: 'pointer' }}
                           alt={item.name}
                           onError={(e) => {
                             console.error(`Failed to load image for ${item.name}:`, item.image);
@@ -145,29 +142,21 @@ function FeaturedProduct() {
                             {item.discountPercentage > 0 && (
                               <Card.Text className="text-success">{item.discountPercentage}% Off</Card.Text>
                             )}
-                            {/* <Card.Text>Reviews: {item.reviewCount}</Card.Text> */}
                           </div>
-                          <Button
-                            variant="dark"
-                            className="rounded-pill mt-2"
-                            onClick={() => handleAddToCart(item.id)}
-                          >
-                            Add to Cart
-                          </Button>
                         </Card.Body>
                       </Card>
                     </div>
                   ))}
                 </div>
               </div>
-              <Button
-                variant="outline-dark"
+              <button
                 className={`${styles.carouselButton} ${styles.carouselButtonRight}`}
                 onClick={scrollRight}
                 disabled={currentIndex >= products.length - 4}
+                aria-label="Next slide"
               >
-                {">"}
-              </Button>
+                <i className="bi bi-arrow-right-circle-fill"></i>
+              </button>
             </>
           )}
         </div>

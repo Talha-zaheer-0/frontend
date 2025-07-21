@@ -49,3 +49,35 @@
   border-color: #007bff;
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
 }
+
+/* Responsive Design */
+@media (max-width: 768px) { /* Tablet */
+  .search-input {
+    width: 150px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) { /* Mobile */
+  .search-container {
+    width: 100%;
+  }
+  .search-input {
+    width: 100%;
+    margin-left: 0;
+    padding: 6px 8px;
+    font-size: 0.875rem;
+  }
+  .search-icon {
+    font-size: 1.2rem;
+  }
+  .card:hover {
+    transform: none; /* Disable hover effect on mobile */
+    box-shadow: none;
+  }
+  .add-card-custom:hover {
+    transform: none;
+    background-color: transparent;
+  }
+}

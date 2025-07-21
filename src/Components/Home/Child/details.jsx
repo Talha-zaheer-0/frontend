@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import styles from './detail.module.css';
+import Notification from '../Notification';
 
 const DetailedPro = () => {
   const { id: productId } = useParams();
@@ -29,7 +31,15 @@ const DetailedPro = () => {
   const [showReplies, setShowReplies] = useState({});
   const [showAllComments, setShowAllComments] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const carouselRef = useRef(null);
+  const imageRef = useRef(null);
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
+  const [backgroundPosition, setBackgroundPosition] = useState({ x: 0, y: 0 });
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [flashCommentId, setFlashCommentId] = useState(null);
 
   const renderStars = (rating, interactive = false, onStarClick = () => {}) => {
     const starRating = Math.round(rating || 0);
@@ -47,10 +57,14 @@ const DetailedPro = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const storedUserId = localStorage.getItem('userId');
     setIsLoggedIn(!!token);
+    const effectiveUserId = storedUserId || user?._id?.toString() || null;
+    setCurrentUserId(effectiveUserId);
+    console.log('useEffect: Current user ID:', effectiveUserId, { fromLocalStorage: storedUserId, fromAuthContext: user?._id });
+
     if (!productId) return;
 
-    // Fetch product details
     axios.get(`http://localhost:5000/api/products/${productId}`)
       .then(res => {
         const data = res.data || {};
@@ -58,21 +72,29 @@ const DetailedPro = () => {
         setMainImage(data.images?.[0] || '');
         setAverageRating(parseFloat(data.averageRating) || 0);
         setReviewCount(data.reviewCount || 0);
-        console.log('Product data:', data);
       })
-      .catch(err => console.error('Error loading product:', err));
+      .catch(err => {
+        console.error('Error loading product:', err);
+        setNotificationMessage('Failed to load product details.');
+        setShowNotification(true);
+      });
 
-    // Fetch product comments
     axios.get(`http://localhost:5000/api/products/comments/${productId}`)
       .then(res => {
-        const data = res.data || [];
+        const data = (res.data || []).map(comment => ({
+          ...comment,
+          likes: Array.isArray(comment.likes) ? comment.likes.filter(id => id != null).map(id => id.toString()) : [],
+        }));
+        console.log('useEffect: Fetched comments:', data);
         setProductComments(data);
-        console.log('Product comments data:', data);
       })
-      .catch(err => console.error('Error loading product comments:', err));
+      .catch(err => {
+        console.error('Error loading product comments:', err);
+        setNotificationMessage('Failed to load comments.');
+        setShowNotification(true);
+      });
 
-    // Fetch user rating if logged in
-    if (token) {
+    if (token && effectiveUserId) {
       axios.get(`http://localhost:5000/api/products/rating/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -81,14 +103,16 @@ const DetailedPro = () => {
           setAverageRating(parseFloat(res.data.averageRating) || 0);
           setReviewCount(res.data.reviewCount || 0);
         })
-        .catch(err => console.error('Error loading user rating:', err));
+        .catch(err => {
+          console.error('Error loading user rating:', err);
+          setNotificationMessage('Failed to load your rating.');
+          setShowNotification(true);
+        });
     }
 
-    // Fetch related products
     axios.get(`http://localhost:5000/api/products?category=${encodeURIComponent(product.category)}`)
       .then(res => {
         const data = res.data || [];
-        // Exclude the current product and limit to 6
         const filtered = data
           .filter(p => p._id !== productId)
           .slice(0, 16)
@@ -101,13 +125,25 @@ const DetailedPro = () => {
             discountPercentage: p.discountPercentage || 0,
           }));
         setRelatedProducts(filtered);
-        console.log('Related products:', filtered);
       })
-      .catch(err => console.error('Error loading related products:', err));
-  }, [productId, product.category]);
+      .catch(err => {
+        console.error('Error loading related products:', err);
+        setNotificationMessage('Failed to load related products.');
+        setShowNotification(true);
+      });
+
+    console.log('useEffect: Product category for related products:', product.category);
+  }, [productId, product.category, user]);
+
+  useEffect(() => {
+    if (flashCommentId) {
+      const timer = setTimeout(() => setFlashCommentId(null), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [flashCommentId]);
 
   const handleAddToCart = async () => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn || !currentUserId) {
       navigate('/login');
       return;
     }
@@ -119,16 +155,25 @@ const DetailedPro = () => {
         { productId, quantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert('Product added to cart!');
+      setNotificationMessage('Product added to cart!');
+      setShowNotification(true);
     } catch (err) {
       console.error('Error adding to cart:', err.response?.data || err.message);
-      alert('Failed to add product to cart: ' + (err.response?.data?.message || 'Server error'));
+      setNotificationMessage('Failed to add product to cart: ' + (err.response?.data?.message || 'Server error'));
+      setShowNotification(true);
     }
   };
 
   const handleSubmitComment = async (parentId, isReply = false) => {
-    if (!isLoggedIn || (!comment.trim() && !isReply) || (isReply && !replyText.trim())) {
-      alert('Please log in and enter a comment');
+    if (!isLoggedIn || !currentUserId) {
+      setNotificationMessage('Please log in to comment');
+      setShowNotification(true);
+      return;
+    }
+
+    if (!comment.trim() && !isReply || (isReply && !replyText.trim())) {
+      setNotificationMessage('Please enter a comment');
+      setShowNotification(true);
       return;
     }
 
@@ -155,12 +200,12 @@ const DetailedPro = () => {
         setProductComments(prevComments =>
           prevComments.map(c =>
             c._id === parentId
-              ? { ...c, replies: [...(c.replies || []), { ...res.data, userId: user?._id, username: user?.name }] }
+              ? { ...c, replies: [...(c.replies || []), { ...res.data, userId: currentUserId, username: user?.name || 'Anonymous' }] }
               : c
           )
         );
       } else {
-        setProductComments(prevComments => [{ ...res.data, userId: user?._id, username: user?.name }, ...prevComments]);
+        setProductComments(prevComments => [{ ...res.data, userId: currentUserId, username: user?.name || 'Anonymous', likes: [] }, ...prevComments]);
       }
       setComment('');
       setCommentImage(null);
@@ -168,22 +213,45 @@ const DetailedPro = () => {
       setReplyImage(null);
       setSelectedCommentId(null);
       setShowProductCommentBox(false);
-      alert(isReply ? 'Reply submitted successfully!' : 'Comment submitted successfully!');
+      setNotificationMessage(isReply ? 'Reply submitted successfully!' : 'Comment submitted successfully!');
+      setShowNotification(true);
     } catch (err) {
       console.error('Error posting comment/reply:', err.response?.data || err.message);
-      alert('Failed to submit comment/reply: ' + (err.response?.data?.message || 'Server error'));
+      setNotificationMessage('Failed to submit comment/reply: ' + (err.response?.data?.message || 'Server error'));
+      setShowNotification(true);
     }
   };
 
   const handleLikeComment = async (commentId) => {
-    if (!isLoggedIn) {
-      alert('Please log in to like a comment');
+    if (!isLoggedIn || !currentUserId) {
+      setNotificationMessage('Please log jąin to like a comment');
+      setShowNotification(true);
       return;
     }
 
     if (isLiking[commentId]) return;
 
     setIsLiking(prev => ({ ...prev, [commentId]: true }));
+
+    // Optimistic UI update
+    setProductComments(prevComments =>
+      prevComments.map(c =>
+        c._id === commentId
+          ? {
+              ...c,
+              likes: Array.isArray(c.likes)
+                ? c.likes
+                    .filter(id => id != null)
+                    .map(id => id.toString())
+                    .includes(currentUserId)
+                  ? c.likes.filter(id => id == null || id.toString() !== currentUserId)
+                  : [...c.likes.filter(id => id != null), currentUserId]
+                : [currentUserId],
+            }
+          : c
+      )
+    );
+
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(
@@ -192,24 +260,67 @@ const DetailedPro = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      console.log('Like response:', res.data);
+
+      // Update with backend response
       setProductComments(prevComments =>
         prevComments.map(c =>
           c._id === commentId
-            ? { ...c, likes: Array.isArray(res.data.likes) ? res.data.likes : [] }
+            ? {
+                ...c,
+                likes: Array.isArray(res.data.likes)
+                  ? res.data.likes.filter(id => id != null).map(id => id.toString())
+                  : [],
+              }
             : c
         )
       );
+      setFlashCommentId(commentId);
     } catch (err) {
       console.error('Error toggling like:', err.response?.data || err.message);
-      alert('Failed to toggle like: ' + (err.response?.data?.message || 'Server error'));
+      setNotificationMessage('Failed to toggle like: ' + (err.response?.data?.message || 'Server error'));
+      setShowNotification(true);
+
+      // Rollback optimistic update on error
+      setProductComments(prevComments =>
+        prevComments.map(c =>
+          c._id === commentId
+            ? {
+                ...c,
+                likes: Array.isArray(c.likes)
+                  ? c.likes
+                      .filter(id => id != null)
+                      .map(id => id.toString())
+                      .includes(currentUserId)
+                    ? c.likes.filter(id => id == null || id.toString() !== currentUserId)
+                    : [...c.likes.filter(id => id != null), currentUserId]
+                  : [currentUserId],
+              }
+            : c
+        )
+      );
+
+      // Fallback: Re-fetch comments
+      try {
+        const commentsRes = await axios.get(`http://localhost:5000/api/products/comments/${productId}`);
+        const sanitizedComments = (commentsRes.data || []).map(comment => ({
+          ...comment,
+          likes: Array.isArray(comment.likes) ? comment.likes.filter(id => id != null).map(id => id.toString()) : [],
+        }));
+        setProductComments(sanitizedComments);
+        console.log('Re-fetched comments:', sanitizedComments);
+      } catch (fetchErr) {
+        console.error('Error re-fetching comments:', fetchErr);
+      }
     } finally {
       setIsLiking(prev => ({ ...prev, [commentId]: false }));
     }
   };
 
   const handleRateProduct = async (rating) => {
-    if (!isLoggedIn) {
-      navigate('/login');
+    if (!isLoggedIn || !currentUserId) {
+      setNotificationMessage('Please log in to rate');
+      setShowNotification(true);
       return;
     }
 
@@ -223,18 +334,23 @@ const DetailedPro = () => {
       setUserRating(rating);
       setAverageRating(parseFloat(res.data.averageRating) || 0);
       setReviewCount(res.data.reviewCount || 0);
-      alert(res.data.message);
+      setNotificationMessage(res.data.message);
+      setShowNotification(true);
     } catch (err) {
       console.error('Error submitting rating:', err.response?.data || err.message);
-      alert('Failed to submit rating: ' + (err.response?.data?.message || 'Server error'));
+      setNotificationMessage('Failed to submit rating: ' + (err.response?.data?.message || 'Server error'));
+      setShowNotification(true);
     }
   };
 
   const handleImageClick = (imageUrl) => {
-    setSelectedImage(imageUrl || '');
+    if (imageUrl && imageUrl !== '/placeholder.jpg') {
+      setSelectedImage(imageUrl);
+    }
   };
 
-  const closePopup = () => {
+  const closePopup = (e) => {
+    e.stopPropagation();
     setSelectedImage(null);
   };
 
@@ -265,16 +381,61 @@ const DetailedPro = () => {
     }
   };
 
+  const handleMouseEnter = () => {
+    setShowMagnifier(true);
+  };
+
+  const handleMouseLeave = () => {
+    setShowMagnifier(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!imageRef.current) return;
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const imgWidth = rect.width;
+    const imgHeight = rect.height;
+
+    const magnifierSize = 100;
+    const zoomLevel = 2;
+
+    const halfMagnifier = magnifierSize / 2;
+    const boundedX = Math.max(halfMagnifier, Math.min(x, imgWidth - halfMagnifier));
+    const boundedY = Math.max(halfMagnifier, Math.min(y, imgHeight - halfMagnifier));
+
+    const bgX = -((boundedX - halfMagnifier) * zoomLevel);
+    const bgY = -((boundedY - halfMagnifier) * zoomLevel);
+
+    setMagnifierPosition({ x: boundedX - halfMagnifier, y: boundedY - halfMagnifier });
+    setBackgroundPosition({ x: bgX, y: bgY });
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.topSection}>
         <div className={styles.imageSection}>
-          <div className={styles.imageContainer}>
+          <div className={styles.imageContainer} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onMouseMove={handleMouseMove}>
             <img
+              ref={imageRef}
               src={mainImage || '/placeholder.jpg'}
               alt="Product"
               className={styles.mainImage}
             />
+            {showMagnifier && mainImage && mainImage !== '/placeholder.jpg' && (
+              <div
+                className={styles.magnifier}
+                style={{
+                  left: `${magnifierPosition.x}px`,
+                  top: `${magnifierPosition.y}px`,
+                  backgroundImage: `url(${mainImage})`,
+                  backgroundSize: `${imageRef.current?.width * 2}px ${imageRef.current?.height * 2}px`,
+                  backgroundPosition: `${backgroundPosition.x}px ${backgroundPosition.y}px`,
+                }}
+              />
+            )}
           </div>
           <div className={styles.thumbnailContainer}>
             {product.images?.length > 0 ? (
@@ -407,12 +568,14 @@ const DetailedPro = () => {
                   <p className="mb-1">{comment.text || 'No text'}</p>
                   {comment.image && (
                     <img
-                      src={comment.image || '/placeholder.jpg'}
-                      alt="Comment"
+                      src={comment.image}
+                      alt={`Comment by ${comment.username || 'Anonymous'}`}
                       className={styles.commentImage}
                       onClick={() => handleImageClick(comment.image)}
+                      onError={(e) => { e.target.src = '/placeholder.jpg'; console.error('Image load error:', comment.image); }}
                     />
                   )}
+                  {console.log(`Comment ${comment._id} likes:`, comment.likes, 'User ID:', currentUserId)}
                 </div>
                 {isLoggedIn && (
                   <div className="mt-2 d-flex gap-2 align-items-center">
@@ -427,11 +590,21 @@ const DetailedPro = () => {
                       reply
                     </span>
                     <span
-                      className={`${styles.likeIcon} ${comment.likes?.includes(user?._id) ? styles.liked : ''}`}
+                      className={`${styles.likeIcon} ${
+                        Array.isArray(comment.likes) && comment.likes.filter(id => id != null).map(id => id.toString()).includes(currentUserId)
+                          ? styles.liked
+                          : ''
+                      } ${flashCommentId === comment._id ? styles.flash : ''}`}
                       onClick={() => handleLikeComment(comment._id)}
                       style={{ cursor: isLiking[comment._id] ? 'not-allowed' : 'pointer' }}
                     >
-                      <FontAwesomeIcon icon={faHeart} />
+                      <FontAwesomeIcon
+                        icon={
+                          Array.isArray(comment.likes) && comment.likes.filter(id => id != null).map(id => id.toString()).includes(currentUserId)
+                            ? faHeartSolid
+                            : faHeartRegular
+                        }
+                      />
                       <span className={styles.likeCount}>{comment.likes?.length || 0}</span>
                     </span>
                   </div>
@@ -475,10 +648,11 @@ const DetailedPro = () => {
                             <p><strong>{reply.username || 'Anonymous'}:</strong> {reply.text || 'No text'}</p>
                             {reply.image && (
                               <img
-                                src={reply.image || '/placeholder.jpg'}
-                                alt="Reply"
+                                src={reply.image}
+                                alt={`Reply by ${reply.username || 'Anonymous'}`}
                                 className={styles.commentImage}
                                 onClick={() => handleImageClick(reply.image)}
+                                onError={(e) => { e.target.src = '/placeholder.jpg'; console.error('Image load error:', reply.image); }}
                               />
                             )}
                           </div>
@@ -556,27 +730,32 @@ const DetailedPro = () => {
             position: 'fixed',
             top: 0,
             left: 0,
-            width: '100%',
-            height: '100%',
+            width: '100vw',
+            height: '100vh',
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000,
           }}
+          onClick={closePopup}
         >
           <div
             style={{
               position: 'relative',
-              maxWidth: '600px',
-              maxHeight: '600px',
+              maxWidth: '90%',
+              maxHeight: '90vh',
+              background: '#fff',
+              padding: '10px',
+              borderRadius: '8px',
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <img
               src={selectedImage}
-              alt="Popup"
-              style={{ maxWidth: '100%', maxHeight: '100%' }}
-              onError={(e) => { e.target.src = '/placeholder.jpg'; }}
+              alt="Popup Image"
+              style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain', display: 'block' }}
+              onError={(e) => { e.target.src = '/placeholder.jpg'; console.error('Popup image load error:', selectedImage); }}
             />
             <button
               onClick={closePopup}
@@ -585,12 +764,13 @@ const DetailedPro = () => {
                 top: '10px',
                 right: '10px',
                 background: 'white',
-                border: 'none',
+                border: '1px solid #ccc',
                 borderRadius: '50%',
                 width: '30px',
                 height: '30px',
                 cursor: 'pointer',
                 fontSize: '20px',
+                lineHeight: '28px',
               }}
             >
               ×
@@ -598,8 +778,14 @@ const DetailedPro = () => {
           </div>
         </div>
       )}
+      <Notification
+        show={showNotification}
+        message={notificationMessage}
+        variant={notificationMessage.includes('Failed') ? 'danger' : 'success'}
+        onClose={() => setShowNotification(false)}
+      />
     </div>
-  );
+  ); 
 };
 
 export default DetailedPro;

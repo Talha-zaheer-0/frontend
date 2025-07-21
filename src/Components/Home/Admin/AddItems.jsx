@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Spinner } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function AddItems() {
@@ -20,6 +21,7 @@ export default function AddItems() {
   const [previewUrls, setPreviewUrls] = useState([]); // All images for display
   const [existingImages, setExistingImages] = useState([]); // Existing Cloudinary images
   const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false); // Added for loader
   const sizeOptions = ['S', 'M', 'L', 'XL', 'XXL'];
 
   useEffect(() => {
@@ -100,7 +102,7 @@ export default function AddItems() {
     e.preventDefault();
 
     if (previewUrls.length < 1) {
-      alert('Please upload at least 1 image.');
+      setMessage('❌ Please upload at least 1 image.');
       return;
     }
 
@@ -110,6 +112,7 @@ export default function AddItems() {
       return;
     }
 
+    setSubmitting(true); // Start loader
     const data = new FormData();
     images.forEach(img => data.append('images', img));
     existingImages.forEach(url => data.append('existingImages', url));
@@ -156,6 +159,8 @@ export default function AddItems() {
     } catch (err) {
       console.error('❌ Axios error:', err.response?.data || err.message);
       setMessage(err.response?.data?.message || `❌ Failed to ${id ? 'update' : 'add'} product.`);
+    } finally {
+      setSubmitting(false); // Stop loader
     }
   };
 
@@ -298,10 +303,32 @@ export default function AddItems() {
           </label>
         </div>
 
-        <button type="submit" className="btn btn-dark px-4">
-          {id ? 'Update' : 'Add'}
+        <button
+          type="submit"
+          className="btn btn-dark px-4 d-flex align-items-center"
+          disabled={submitting}
+        >
+          {submitting ? (
+            <>
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+                className="me-2"
+              />
+              Processing...
+            </>
+          ) : (
+            id ? 'Update' : 'Add'
+          )}
         </button>
-        {message && <p className="mt-3 fw-semibold text-success">{message}</p>}
+        {message && (
+          <p className={`mt-3 fw-semibold ${message.includes('Failed') ? 'text-danger' : 'text-success'}`}>
+            {message}
+          </p>
+        )}
       </form>
     </div>
   );

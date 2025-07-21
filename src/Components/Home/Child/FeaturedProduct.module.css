@@ -2,7 +2,7 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  max-width: 1940px;
+  max-width: 1200px; /* Reduced for compact layout */
   margin: 0 auto;
 }
 
@@ -26,53 +26,106 @@
 
 .card {
   flex: 0 0 auto;
-  width: calc(15% - 10px);
+  width: calc(25% - 15px); /* Exactly 4 cards in one line */
   margin: 0 7.5px;
   box-sizing: border-box;
-  transition: transform 0.2s ease-in-out;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
 .card:hover {
-  transform: scale(1.03); /* Scales up slightly on hover for focus effect */
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12); /* Adds subtle shadow for depth */
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 .carouselButton {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 10;
-  font-size: 2rem;
-  padding: 15px 5px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: #1a73e8;
   color: white;
-  border: none;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.carouselButtonLeft {
-  left: -2px;
-}
-
-.carouselButtonRight {
-  right: -2px;
+.carouselButton:hover {
+  background-color: #075cb6;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .carouselButton:disabled {
-  opacity: 0.3;
+  background-color: #cccccc;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-@media (max-width: 768px) {
+.carouselButton i {
+  font-size: 1.8rem;
+}
+
+.carouselButtonLeft {
+  left: 10px;
+}
+
+.carouselButtonRight {
+  right: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) { /* Tablet */
   .card {
-    width: calc(50% - 30px);
-    margin: 0 15px;
+    width: calc(33.33% - 15px); /* Show 3 cards */
+  }
+  .carouselButton {
+    width: 40px;
+    height: 40px;
+  }
+  .carouselButton i {
+    font-size: 1.5rem;
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) { /* Tablet (smaller) */
   .card {
-    width: calc(100% - 30px);
-    margin: 0 15px;
+    width: calc(50% - 15px); /* Show 2 cards */
+  }
+  .carouselButton {
+    width: 35px;
+    height: 35px;
+  }
+  .carouselButton i {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 576px) { /* Mobile */
+  .card {
+    width: calc(100% - 15px); /* Show 1 card */
+  }
+  .card:hover {
+    transform: none; /* Disable hover effect on mobile */
+    box-shadow: none;
+  }
+  .carouselButton {
+    width: 30px;
+    height: 30px;
+  }
+  .carouselButton i {
+    font-size: 1rem;
+  }
+  .carouselButtonLeft {
+    left: 5px;
+  }
+  .carouselButtonRight {
+    right: 5px;
   }
 }

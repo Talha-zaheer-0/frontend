@@ -1,0 +1,4 @@
+.fixed-height-image {
+  height: 400px; /* Set your desired height */
+  object-fit: cover; /* Crop image nicely to fit height */
+}

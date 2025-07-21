@@ -1,0 +1,47 @@
+.bannerMain{
+     background-image: url('../../../../assets//banner//girl.png.jpg');
+     background-attachment: fixed;
+     background-position: center;
+     background-size: cover;
+     height: 80vh;
+     top: 0 !important;
+     left: 0;
+     width: 100%;
+     position: relative;
+     z-index: -1 !important;
+}
+.text1{
+  z-index: 999 !important;
+  color: white !important;
+}
+.darkkkk{
+     background-color: black;
+     height: 100%;
+     width: 100%;
+     opacity: 0.4;
+     /* z-index: 1; */
+}
+.cont{
+     z-index: 5;
+}
+.shopBtn {
+  margin-top: 20px;
+  padding: 12px 32px;
+  background: linear-gradient(90deg, #f6d365, #fda085); /* Golden gradient */
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 999px; /* Full rounded */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.banner1{ 
+ background-size: fill !important; 
+}
+
+.shopBtn:hover {
+  background: linear-gradient(90deg, #fda085, #f6d365); /* Reverse gradient */
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}

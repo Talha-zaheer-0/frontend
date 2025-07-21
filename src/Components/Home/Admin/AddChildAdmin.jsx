@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import Notification from '../Notification';
 
 const AddChildAdmin = () => {
   const { user } = useAuth();
@@ -10,6 +11,8 @@ const AddChildAdmin = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   useEffect(() => {
     if (!user?.isOwner) {
@@ -35,11 +38,15 @@ const AddChildAdmin = () => {
       });
       setMessage(response.data.msg);
       setError('');
+      setNotificationMessage(response.data.msg);
+      setShowNotification(true);
       setTimeout(() => navigate('/admin'), 2000);
     } catch (err) {
       const errorMsg = err.response?.data?.msg || 'Failed to create child admin. Please try again.';
       setError(errorMsg);
       setMessage('');
+      setNotificationMessage(errorMsg);
+      setShowNotification(true);
       if (err.response?.status === 403) {
         setError('Child admin limit reached (maximum 3). Check your email for details.');
       } else if (err.response?.status === 500 && errorMsg.includes('email')) {
@@ -80,6 +87,12 @@ const AddChildAdmin = () => {
         </div>
         <button type="submit" className="btn btn-primary">Create Admin</button>
       </form>
+      <Notification 
+        show={showNotification} 
+        message={notificationMessage} 
+        variant={notificationMessage.includes('Failed') ? 'danger' : 'success'}
+        onClose={() => setShowNotification(false)} 
+      />
     </div>
   );
 };

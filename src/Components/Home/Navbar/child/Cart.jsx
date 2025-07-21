@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Spinner } from 'react-bootstrap';
 import axios from 'axios';
-import { FaTrash } from 'react-icons/fa';
+import Notification from '../../Notification';
 
-const Cart = () => {
+const Cart = ({ socket }) => {
   const navigate = useNavigate();
   const [cart, setCart] = useState({ items: [] });
   const [loading, setLoading] = useState(true);
-  const [showDelete, setShowDelete] = useState({});
   const [selectedItems, setSelectedItems] = useState({});
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
-  // Fetch cart
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -32,24 +32,47 @@ const Cart = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching cart:', err.response?.data || err.message);
-        alert('Failed to fetch cart. Please try again.');
+        setNotificationMessage('Failed to fetch cart. Please try again.');
+        setShowNotification(true);
         setLoading(false);
       }
     };
     fetchCart();
-  }, []);
 
-  // Toggle delete button visibility
-  const toggleDelete = (
+    const userId = localStorage.getItem('userId');
+    if (userId && socket) {
+      socket.on('cartUpdate', (updatedCart) => {
+        console.log('Received cart update via Socket.IO:', updatedCart);
+        setCart(updatedCart || { items: [] });
+        const updatedSelected = {};
+        updatedCart.items.forEach(item => {
+          updatedSelected[item.productId?._id] = true;
+        });
+        setSelectedItems(updatedSelected);
+      });
 
-productId) => {
-    setShowDelete(prev => ({
-      ...prev,
-      [productId]: !prev[productId]
-    }));
-  };
+      socket.on('orderUpdate', (order) => {
+        console.log('Received order update via Socket.IO:', order);
+        if (order) {
+          setNotificationMessage(`Order ${order.orderId} created or updated!`);
+          setShowNotification(true);
+          navigate('/order-confirmation');
+        } else {
+          setNotificationMessage('An order was deleted or completed.');
+          setShowNotification(true);
+          fetchCart();
+        }
+      });
+    }
 
-  // Handle checkbox change
+    return () => {
+      if (userId && socket) {
+        socket.off('cartUpdate');
+        socket.off('orderUpdate');
+      }
+    };
+  }, [navigate, socket]);
+
   const handleCheckboxChange = (productId) => {
     setSelectedItems(prev => ({
       ...prev,
@@ -57,7 +80,6 @@ productId) => {
     }));
   };
 
-  // Update quantity
   const handleQuantityChange = async (productId, currentQuantity, direction) => {
     try {
       const newQuantity = direction === 'increase' ? currentQuantity + 1 : Math.max(1, currentQuantity - 1);
@@ -74,11 +96,11 @@ productId) => {
       }
     } catch (err) {
       console.error('Error updating quantity:', err.response?.data || err.message);
-      alert(`Failed to update quantity: ${err.response?.data?.message || err.message}`);
+      setNotificationMessage(`Failed to update quantity: ${err.response?.data?.message || err.message}`);
+      setShowNotification(true);
     }
   };
 
-  // Remove item from cart
   const handleRemove = async (productId) => {
     try {
       const token = localStorage.getItem('token');
@@ -93,21 +115,18 @@ productId) => {
           delete updated[productId];
           return updated;
         });
-        setShowDelete(prev => {
-          const updated = { ...prev };
-          delete updated[productId];
-          return updated;
-        });
+        setNotificationMessage('Product removed from cart successfully!');
+        setShowNotification(true);
       } else {
         throw new Error('Invalid response from server');
       }
     } catch (err) {
       console.error('Error removing from cart:', err.response?.data || err.message);
-      alert(`Failed to remove product from cart: ${err.response?.data?.message || err.message}`);
+      setNotificationMessage(`Failed to remove product from cart: ${err.response?.data?.message || err.message}`);
+      setShowNotification(true);
     }
   };
 
-  // Calculate item price with discount
   const calculateItemPrice = (item) => {
     const price = item.productId?.price || 0;
     const discount = item.productId?.discountPercentage || 0;
@@ -115,7 +134,6 @@ productId) => {
     return (discountedPrice * item.quantity).toFixed(2);
   };
 
-  // Calculate total for selected items
   const calculateTotal = () => {
     return cart.items.reduce((total, item) => {
       if (!selectedItems[item.productId?._id]) return total;
@@ -126,17 +144,16 @@ productId) => {
     }, 0).toFixed(2);
   };
 
-  // Navigate to checkout
   const handleCheckout = () => {
     const selectedProductIds = Object.keys(selectedItems).filter(id => selectedItems[id]);
     if (selectedProductIds.length === 0) {
-      alert('Please select at least one item to proceed to checkout');
+      setNotificationMessage('Please select at least one item to proceed to checkout');
+      setShowNotification(true);
       return;
     }
     navigate('/checkout', { state: { selectedProductIds } });
   };
 
-  // Navigate to orders
   const handleViewOrders = () => {
     navigate('/order-confirmation');
   };
@@ -219,21 +236,12 @@ productId) => {
                 <div className="text-end">
                   <Button
                     variant="link"
-                    onClick={() => toggleDelete(item.productId?._id)}
+                    onClick={() => handleRemove(item.productId?._id)}
                     className="text-danger"
+                    style={{ fontSize: '1.2rem', textDecoration: 'none' }}
                   >
-                    <FaTrash />
+                    ✕
                   </Button>
-                  {showDelete[item.productId?._id] && (
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleRemove(item.productId?._id)}
-                      className="mt-2"
-                    >
-                      Delete
-                    </Button>
-                  )}
                 </div>
               </Card.Body>
             </Card>
@@ -250,6 +258,12 @@ productId) => {
           </div>
         </div>
       )}
+      <Notification 
+        show={showNotification} 
+        message={notificationMessage} 
+        variant={notificationMessage.includes('Failed') ? 'danger' : 'success'}
+        onClose={() => setShowNotification(false)} 
+      />
     </div>
   );
 };

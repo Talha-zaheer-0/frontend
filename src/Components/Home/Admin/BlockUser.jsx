@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Spinner, Button, Alert } from "react-bootstrap";
+import Notification from '../Notification';
 
 const BlockAnyUser = () => {
     const [allUsers, setAllUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [loadingToggleUserId, setLoadingToggleUserId] = useState(null);
     const [error, setError] = useState(null);
+    const [showNotification, setShowNotification] = useState(false);
+    const [notificationMessage, setNotificationMessage] = useState('');
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -28,6 +31,8 @@ const BlockAnyUser = () => {
         } catch (err) {
             console.error("Error fetching users:", err.response?.data || err.message);
             setError(err.response?.data?.msg || "Failed to fetch users. Please try again.");
+            setNotificationMessage(err.response?.data?.msg || "Failed to fetch users. Please try again.");
+            setShowNotification(true);
         } finally {
             setLoading(false);
         }
@@ -46,10 +51,14 @@ const BlockAnyUser = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             console.log(res.data.msg);
-            await fetchUsers(); // Refresh user list
+            await fetchUsers();
+            setNotificationMessage(res.data.msg);
+            setShowNotification(true);
         } catch (error) {
             console.error("Error toggling block status:", error.response?.data || error.message);
             setError(error.response?.data?.msg || "Failed to toggle block status. Please try again.");
+            setNotificationMessage(error.response?.data?.msg || "Failed to toggle block status. Please try again.");
+            setShowNotification(true);
         } finally {
             setLoadingToggleUserId(null);
         }
@@ -98,6 +107,12 @@ const BlockAnyUser = () => {
                     )}
                 </div>
             )}
+            <Notification 
+                show={showNotification} 
+                message={notificationMessage} 
+                variant={notificationMessage.includes('Failed') ? 'danger' : 'success'}
+                onClose={() => setShowNotification(false)} 
+            />
         </div>
     );
 };

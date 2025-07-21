@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Card, Button, Spinner } from 'react-bootstrap';
 import styles from './HotProduct.module.css'; 
+import Notification from '../Notification'; // Assuming Notification is in the same directory or adjust the path
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/250x250?text=No+Image';
 
@@ -13,6 +14,8 @@ function HotProduct() {
   const [message, setMessage] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const carouselRef = useRef(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   useEffect(() => {
     const fetchHotProducts = async () => {
@@ -57,10 +60,12 @@ function HotProduct() {
         { productId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert('Product added to cart!');
+      setNotificationMessage('Product added to cart!');
+      setShowNotification(true);
     } catch (err) {
       console.error('Error adding to cart:', err.response?.data || err.message);
-      alert('Failed to add product to cart');
+      setNotificationMessage('Failed to add product to cart');
+      setShowNotification(true);
     }
   };
 
@@ -91,11 +96,8 @@ function HotProduct() {
   return (
     <div className="container py-4">
       <h2 className="text-center mb-4">
-        <span className="text-muted">HOT</span> <strong>PRODUCTS</strong>
-      </h2>
-      <p className="text-center text-muted">
-        Our top-selling products this season.
-      </p>
+        <span className="text-muted">Hot Products</span>  
+      </h2> 
 
       {loading ? (
         <div className="text-center my-5">
@@ -169,13 +171,18 @@ function HotProduct() {
                 onClick={scrollRight}
                 disabled={currentIndex >= products.length - 4}
               >
-                
-               {">"}
+                {">"}
               </Button>
             </>
           )}
         </div>
       )}
+      <Notification 
+        show={showNotification} 
+        message={notificationMessage} 
+        variant={notificationMessage.includes('Failed') ? 'danger' : 'success'}
+        onClose={() => setShowNotification(false)} 
+      />
     </div>
   );
 }

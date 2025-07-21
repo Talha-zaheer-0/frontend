@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import './Collection.css';
+import Notification from '../Notification';
 
 const ProductGallery = () => {
   const [products, setProducts] = useState([]);
@@ -15,51 +16,54 @@ const ProductGallery = () => {
   const [isNewestFilter, setIsNewestFilter] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const pathname = location.pathname;
-  const queryParams = new URLSearchParams(location.search);
-  const category = queryParams.get('category');
-  const subcategory = queryParams.get('subcategory');
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   useEffect(() => {
     setLoading(true);
     axios.get('http://localhost:5000/api/products')
       .then(response => {
         let allProducts = response.data;
-        if (category) {
-          allProducts = allProducts.filter(
-            p => p.category.toLowerCase() === category.toLowerCase()
-          );
-        }
-        if (subcategory) {
-          allProducts = allProducts.filter(
-            p => p.subcategory.toLowerCase() === subcategory.toLowerCase()
-          );
+        if (location.search) {
+          const queryParams = new URLSearchParams(location.search);
+          const category = queryParams.get('category');
+          const subcategory = queryParams.get('subcategory');
+          if (category) {
+            allProducts = allProducts.filter(
+              p => p.category.toLowerCase() === category.toLowerCase()
+            );
+          }
+          if (subcategory) {
+            allProducts = allProducts.filter(
+              p => p.subcategory.toLowerCase() === subcategory.toLowerCase()
+            );
+          }
         }
         setProducts(allProducts);
-        setFilteredProducts(allProducts); // Initialize filtered products
+        setFilteredProducts(allProducts);
         setLoading(false);
       })
       .catch(error => {
         console.error('Error fetching products:', error.message || error.response?.data?.message);
+        setNotificationMessage('Failed to fetch products. Please try again.');
+        setShowNotification(true);
         setLoading(false);
       });
-  }, [category, subcategory]);
+  }, [location.search]);
 
   useEffect(() => {
     let result = [...products];
 
-    // Apply search filter
     if (searchQuery) {
       result = result.filter(product =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Apply newest items filter
     if (isNewestFilter) {
       result = result
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)) // Sort by updatedAt descending
-        .slice(0, 10); // Take the 10 most recent
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .slice(0, 10);
     }
 
     setFilteredProducts(result);
@@ -88,17 +92,19 @@ const ProductGallery = () => {
         { productId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert('Product added to cart!');
+      setNotificationMessage('Product added to cart!');
+      setShowNotification(true);
     } catch (err) {
       console.error('Error adding to cart:', err.response?.data || err.message);
-      alert('Failed to add product to cart');
+      setNotificationMessage('Failed to add product to cart');
+      setShowNotification(true);
     }
   };
 
   const toggleSearchBar = () => {
     setIsSearchOpen(!isSearchOpen);
     if (isSearchOpen) {
-      setSearchQuery(''); // Clear search query when closing
+      setSearchQuery('');
     }
   };
 
@@ -131,30 +137,30 @@ const ProductGallery = () => {
         </div>
       </div>
       <div className="row">
-        {pathname !== '/' && (
+        {location.pathname !== '/' && (
           <div className="col-md-3 mb-4">
             <h5 className="mb-3">Shop by Style</h5>
             <div className="btn-group-vertical w-100" role="group" aria-label="Subcategory filters">
               <button
-                className={`btn btn-outline-primary text-start ${!subcategory ? 'active' : ''}`}
+                className={`btn btn-outline-primary text-start ${!location.search.includes('subcategory') ? 'active' : ''}`}
                 onClick={() => handleSubcategoryClick('all')}
               >
                 All
               </button>
               <button
-                className={`btn btn-outline-primary text-start ${subcategory === 'topwear' ? 'active' : ''}`}
+                className={`btn btn-outline-primary text-start ${location.search.includes('subcategory=topwear') ? 'active' : ''}`}
                 onClick={() => handleSubcategoryClick('topwear')}
               >
                 Topwear
               </button>
               <button
-                className={`btn btn-outline-primary text-start ${subcategory === 'footwear' ? 'active' : ''}`}
+                className={`btn btn-outline-primary text-start ${location.search.includes('subcategory=footwear') ? 'active' : ''}`}
                 onClick={() => handleSubcategoryClick('footwear')}
               >
                 Footwear
               </button>
               <button
-                className={`btn btn-outline-primary text-start ${subcategory === 'bottomwear' ? 'active' : ''}`}
+                className={`btn btn-outline-primary text-start ${location.search.includes('subcategory=bottomwear') ? 'active' : ''}`}
                 onClick={() => handleSubcategoryClick('bottomwear')}
               >
                 Bottomwear
@@ -168,7 +174,7 @@ const ProductGallery = () => {
             </div>
           </div>
         )}
-        <div className={pathname !== '/' ? 'col-md-9' : 'col-12'}>
+        <div className={location.pathname !== '/' ? 'col-md-9' : 'col-12'}>
           {loading ? (
             <div className="text-center my-5">
               <Spinner animation="border" variant="primary" />
@@ -218,6 +224,12 @@ const ProductGallery = () => {
           )}
         </div>
       </div>
+      <Notification 
+        show={showNotification} 
+        message={notificationMessage} 
+        variant={notificationMessage.includes('Failed') ? 'danger' : 'success'}
+        onClose={() => setShowNotification(false)} 
+      />
     </div>
   );
 };

@@ -24,12 +24,14 @@
   gap: 1rem;
 }
 
-/* Main image */
+/* Main image container with relative positioning for magnifier */
 .imageContainer {
   display: flex;
   justify-content: center;
+  position: relative; /* Added for magnifier positioning */
 }
 
+/* Main image */
 .mainImage {
   width: 100%;
   max-width: 400px;
@@ -42,8 +44,24 @@
   transition: transform 0.3s ease-in-out;
 }
 
-.mainImage:hover {
-  transform: scale(1.02);
+/* Magnifier scope */
+.magnifier {
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  border: 2px solid #4f46e5;
+  background-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  background-repeat: no-repeat;
+  z-index: 10;
+  display: none; /* Hidden by default */
+}
+
+/* Show magnifier when image container is hovered */
+.imageContainer:hover .magnifier {
+  display: block;
 }
 
 /* Thumbnail gallery */
@@ -189,6 +207,16 @@
 
 .likeIcon.liked {
   color: #dc2626; /* Red for liked state */
+}
+
+.likeIcon.flash {
+  animation: flash 0.5s ease-in-out forwards; /* Single flash effect */
+}
+
+@keyframes flash {
+  0% { color: #6b7280; } /* Start with gray */
+  50% { color: #dc2626; } /* Flash to red */
+  100% { color: #6b7280; } /* Return to gray */
 }
 
 .likeCount {
@@ -407,21 +435,21 @@
 }
 
 /* Responsive design */
-@media (max-width: 768px) {
+@media (max-width: 992px) { /* Tablet */
   .topSection {
     flex-direction: column;
     align-items: center;
   }
   .imageSection, .productInfo {
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
   }
   .mainImage {
-    max-height: 300px;
+    max-height: 350px;
   }
   .thumbnail {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
   }
   .productTitle {
     font-size: 1.5rem;
@@ -437,6 +465,104 @@
     width: 120px;
   }
   .relatedImage {
+    height: 100px;
+  }
+  .magnifier {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+@media (max-width: 768px) { /* Tablet (smaller) */
+  .mainImage {
+    max-height: 300px;
+  }
+  .thumbnail {
+    width: 60px;
+    height: 60px;
+  }
+  .buttonPrimary, .buttonSecondary {
+    padding: 0.4rem 0.8rem;
+  }
+  .relatedCard {
+    width: 100px;
+  }
+  .relatedImage {
+    height: 80px;
+  }
+  .magnifier {
+    width: 70px;
+    height: 70px;
+  }
+}
+
+@media (max-width: 576px) { /* Mobile */
+  .container {
+    padding: 1rem;
+  }
+  .topSection {
+    gap: 1rem;
+  }
+  .imageSection, .productInfo {
+    max-width: 100%;
+  }
+  .mainImage {
+    max-height: 250px;
+  }
+  .thumbnail {
+    width: 50px;
+    height: 50px;
+  }
+  .productTitle {
+    font-size: 1.25rem;
+  }
+  .buttonPrimary, .buttonSecondary {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.875rem;
+  }
+  .commentImage {
+    width: 40px;
+    height: 40px;
+  }
+  .relatedCard {
+    width: 80px;
+  }
+  .relatedImage {
+    height: 60px;
+  }
+  .carouselButton {
+    font-size: 1.2rem;
+    padding: 8px;
+  }
+  .star {
+    font-size: 1.2rem;
+  }
+  .viewRepliesButton {
+    font-size: 0.875rem;
+  }
+  .replyLink {
+    font-size: 0.8rem;
+  }
+  .likeIcon {
+    font-size: 0.9rem;
+  }
+  .likeCount {
+    font-size: 0.8rem;
+  }
+  .quantityButton {
+    padding: 0.3rem;
+  }
+  .input {
+    width: 3rem;
+    padding: 0.3rem;
+    font-size: 0.875rem;
+  }
+  .textarea {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+  .magnifier {
+    width: 100px;
     height: 100px;
   }
 }

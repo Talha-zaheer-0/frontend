@@ -140,8 +140,48 @@
   transition: left 0.5s ease-in-out;
 }
 
-.color{
-    color:#4f46e5 !important; 
+.color {
+  color: #4f46e5 !important;
+}
+
+.btn-success {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+}
+
+.contact-icon {
+  position: fixed;
+  bottom: 90px;
+  right: 50px;
+  /* background: #25D366; */
+  /* color: #ffffff; */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  line-height: 1; /* Ensure proper icon alignment */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.logo5{
+width: 70px;
+height: 70px;
+}
+
+.contact-icon:hover {
+  /* background: #20b358; */
+  transform: scale(1.1);
 }
 
 @media (max-width: 768px) {
@@ -157,6 +197,10 @@
     padding: 0.5rem;
   }
 
+  .order-table th {
+    font-size: 1rem;
+  }
+
   .order-items-table .order-item-img {
     width: 50px;
     height: 50px;
@@ -168,5 +212,18 @@
 
   .status-car {
     font-size: 1rem;
+  }
+
+  .btn-success {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .contact-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    bottom: 15px;
+    right: 15px;
   }
 }

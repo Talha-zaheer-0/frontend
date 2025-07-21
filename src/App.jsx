@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './Components/Home/AuthContext';
 import Signup from './Components/Home/Navbar/child/Signup';
 import Home from './Components/Home/Home';
-import SaleCarousel from './components/Home/Child/SaleCarousel';
 import Navbar from './Components/Home/Navbar/Navbar';
 import Login from './Components/Home/Navbar/child/login';
 import About from './Components/Home/Navbar/child/About';
@@ -25,49 +24,91 @@ import ChildAdmins from './Components/Home/Admin/ChildAdmins';
 import VerifyChildAdmin from './Components/Home/Admin/VerifyChildAdmin';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import './App.css';
+import io from 'socket.io-client';
+
+const socket = io('http://localhost:5000', {
+  auth: {
+    token: localStorage.getItem('token'),
+  },
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+});
 
 function App() {
+  useEffect(() => {
+    const handleTokenChange = () => {
+      const newToken = localStorage.getItem('token');
+      if (socket.auth.token !== newToken) {
+        socket.auth.token = newToken;
+        socket.disconnect().connect();
+        console.log('Socket.IO reconnected with new token');
+      }
+    };
+    window.addEventListener('authChange', handleTokenChange);
+
+    socket.on('connect', () => {
+      console.log('Socket.IO connected');
+    });
+    socket.on('disconnect', () => {
+      console.log('Socket.IO disconnected');
+    });
+    socket.on('connect_error', (err) => {
+      console.error('Socket.IO connection error:', err.message);
+    });
+
+    return () => {
+      window.removeEventListener('authChange', handleTokenChange);
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connect_error');
+      // Do not disconnect socket here to allow persistent connection for navbar updates
+    };
+  }, []);
+
   return (
     <Router>
       <AuthProvider>
-        <MainRoutes />
+        <MainRoutes socket={socket} />
       </AuthProvider>
     </Router>
   );
 }
 
-function MainRoutes() {
+function MainRoutes({ socket }) {
   const location = useLocation();
   const hideNavAndFooter = location.pathname.startsWith('/admin') && location.pathname !== '/admin/verify';
 
   return (
     <>
-     {!hideNavAndFooter && <SaleCarousel />}
-       <Navbar className= 'fixed' />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/collection" element={<Collection />} />
-        <Route path="/product/:id" element={<DetailedPro />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order-confirmation" element={<OrderConfirmation />} />
-        <Route path="/admin/verify" element={<VerifyChildAdmin />} />
-        <Route path="/admin/*" element={<AdminPanel />}>
-          <Route path="add-items" element={<AddItems />} />
-          <Route path="add-items/:id" element={<AddItems />} />
-          <Route path="list-items" element={<Listitem />} />
-          <Route path="orders" element={<Orders />} />
-          <Route path="blockusers" element={<BlockAnyUser />} />
-          <Route path="add-child-admin" element={<AddChildAdmin />} />
-          <Route path="child-admins" element={<ChildAdmins />} />
-        </Route>
-      </Routes>
-      {!hideNavAndFooter && <Footer />}
+      <Navbar socket={socket} className="fixed" />
+      <div className="main-content">
+        <Routes>
+          <Route path="/" element={<Home socket={socket} />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/collection" element={<Collection />} />
+          <Route path="/product/:id" element={<DetailedPro />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/cart" element={<Cart socket={socket} />} />
+          <Route path="/checkout" element={<Checkout socket={socket} />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation socket={socket} />} />
+          <Route path="/admin/verify" element={<VerifyChildAdmin />} />
+          <Route path="/admin/*" element={<AdminPanel socket={socket} />}>
+            <Route path="add-items" element={<AddItems socket={socket} />} />
+            <Route path="add-items/:id" element={<AddItems socket={socket} />} />
+            <Route path="list-items" element={<Listitem socket={socket} />} />
+            <Route path="orders" element={<Orders socket={socket} />} />
+            <Route path="blockusers" element={<BlockAnyUser socket={socket} />} />
+            <Route path="add-child-admin" element={<AddChildAdmin socket={socket} />} />
+            <Route path="child-admins" element={<ChildAdmins socket={socket} />} />
+          </Route>
+        </Routes>
+        {!hideNavAndFooter && <Footer />}
+      </div>
     </>
   );
 }

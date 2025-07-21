@@ -88,11 +88,10 @@ function Sale() {
 
   return (
     <div className="container py-4">
-      <h2 className="text-center mb-4">
-        <span className="text-muted">SALE</span> <strong>PRODUCTS</strong>
-      </h2>
-      <p className="text-center text-muted">
-        Our top discounted products.
+      <h2 className=" mb-4">
+        <span className="text-muted"><strong>Product on Sale</strong></span>   
+      </h2> 
+      <p className=" text-muted">Grab It Now 
       </p>
 
       {loading ? (

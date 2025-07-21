@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Spinner } from 'react-bootstrap';
 import Sidebar from './sidebar';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -11,8 +12,10 @@ const Orders = () => {
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [imageErrors, setImageErrors] = useState({});
+  const [trackingId, setTrackingId] = useState({});
+  const [showTrackingInput, setShowTrackingInput] = useState({});
+  const [loading, setLoading] = useState({}); // Track loading state for each button
 
-  // Fetch orders only when manually triggered
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -31,7 +34,7 @@ const Orders = () => {
       if ((response.data.orders || []).length === 0) {
         setMessage('No orders found.');
       }
-      setMessage(''); // Clear any previous messages on successful fetch
+      setMessage('');
     } catch (err) {
       console.error('❌ Fetch Orders Error:', {
         message: err.message,
@@ -47,9 +50,8 @@ const Orders = () => {
   };
 
   useEffect(() => {
-    // Initial fetch only once on mount
     fetchOrders();
-  }, []); // Empty dependency array to run only once
+  }, []);
 
   const validateImage = (image) => {
     if (!image || typeof image !== 'string') {
@@ -71,43 +73,66 @@ const Orders = () => {
 
   const updateStatus = async (orderId, newStatus) => {
     try {
+      setLoading(prev => ({ ...prev, [orderId]: newStatus }));
       const token = localStorage.getItem('token');
+      const body = { status: newStatus };
+      if (newStatus === 'Shipped' && trackingId[orderId]) {
+        body.trackingId = trackingId[orderId];
+      } else if (newStatus === 'Shipped' && !trackingId[orderId]) {
+        setMessage('❌ Tracking ID is required to ship the order.');
+        setLoading(prev => ({ ...prev, [orderId]: null }));
+        return;
+      }
+
       const response = await axios.patch(
         `http://localhost:5000/api/products/orders/${orderId}`,
-        { status: newStatus },
+        body,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      setOrders(orders.map(order =>
-        order.orderId === orderId ? { ...order, status: newStatus } : order
-      ));
-      setMessage(`Order ${orderId} updated to ${newStatus}`);
       if (newStatus === 'Delivered') {
-        await deleteOrder(orderId);
+        setOrders(orders.filter(order => order.orderId !== orderId));
+        setMessage(`Order ${orderId} updated to ${newStatus} and removed from list`);
+      } else {
+        setOrders(orders.map(order =>
+          order.orderId === orderId ? { ...order, status: newStatus, trackingId: newStatus === 'Shipped' ? trackingId[orderId] : order.trackingId } : order
+        ));
+        setMessage(`Order ${orderId} updated to ${newStatus}`);
       }
+      setShowTrackingInput(prev => ({ ...prev, [orderId]: false }));
+      setTrackingId(prev => ({ ...prev, [orderId]: '' }));
     } catch (err) {
       console.error('❌ Update Status Error:', err.response?.data || err.message);
       setMessage(err.response?.data?.message || `❌ Failed to update order ${orderId}.`);
+    } finally {
+      setLoading(prev => ({ ...prev, [orderId]: null }));
     }
   };
 
-  const deleteOrder = async (orderId) => {
+  const completeOrder = async (orderId) => {
     try {
+      setLoading(prev => ({ ...prev, [orderId]: 'Complete' }));
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/products/orders/${orderId}`, {
+      await axios.post(`http://localhost:5000/api/products/orders/${orderId}/complete`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       setOrders(orders.filter(order => order.orderId !== orderId));
-      setMessage(`Order ${orderId} deleted successfully.`);
+      setMessage(`Order ${orderId} completed and deleted successfully.`);
     } catch (err) {
-      console.error('❌ Delete Order Error:', err.response?.data || err.message);
-      setMessage(err.response?.data?.message || `❌ Failed to delete order ${orderId}.`);
+      console.error('❌ Complete Order Error:', err.response?.data || err.message);
+      setMessage(err.response?.data?.message || `❌ Failed to complete order ${orderId}.`);
+    } finally {
+      setLoading(prev => ({ ...prev, [orderId]: null }));
     }
+  };
+
+  const toggleTrackingInput = (orderId) => {
+    setShowTrackingInput(prev => ({ ...prev, [orderId]: !prev[orderId] }));
   };
 
   const refreshOrders = () => {
@@ -150,6 +175,7 @@ const Orders = () => {
                   <th>Address</th>
                   <th>Phone</th>
                   <th>Status</th>
+                  <th>Tracking ID</th>
                   <th>Created At</th>
                   <th>Actions</th>
                 </tr>
@@ -178,7 +204,7 @@ const Orders = () => {
                                     ...prev,
                                     [`${order.orderId}-${item.productId?._id || item._id}`]: true,
                                   }));
-                                  e.target.style.display = 'none'; // Hide the broken image
+                                  e.target.style.display = 'none';
                                 }}
                               />
                             )}
@@ -191,44 +217,131 @@ const Orders = () => {
                     <td>{order.deliveryAddress || 'N/A'}</td>
                     <td>{order.phone || 'N/A'}</td>
                     <td>{order.status || 'N/A'}</td>
+                    <td>{order.trackingId || 'N/A'}</td>
                     <td>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</td>
                     <td>
-                      {order.status !== 'Delivered' && (
-                        <div className="btn-group btn-group-sm">
-                          {order.status === 'Pending' && (
-                            <button
-                              className="btn btn-primary"
-                              onClick={() => updateStatus(order.orderId, 'Processing')}
-                            >
-                              Process
-                            </button>
-                          )}
-                          {order.status === 'Processing' && (
-                            <button
-                              className="btn btn-primary"
-                              onClick={() => updateStatus(order.orderId, 'Shipped')}
-                            >
-                              Ship
-                            </button>
-                          )}
-                          {order.status === 'Shipped' && (
-                            <button
-                              className="btn btn-primary"
-                              onClick={() => updateStatus(order.orderId, 'Delivered')}
-                            >
-                              Deliver
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {order.status === 'Delivered' && (
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={() => deleteOrder(order.orderId)}
-                        >
-                          Delete
-                        </button>
-                      )}
+                      <div className="btn-group btn-group-sm">
+                        {order.status === 'Pending' && (
+                          <button
+                            className="btn btn-primary d-flex align-items-center"
+                            onClick={() => updateStatus(order.orderId, 'Processing')}
+                            disabled={loading[order.orderId] === 'Processing'}
+                          >
+                            {loading[order.orderId] === 'Processing' ? (
+                              <>
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                  role="status"
+                                  aria-hidden="true"
+                                  className="me-2"
+                                />
+                                Processing...
+                              </>
+                            ) : (
+                              'Process'
+                            )}
+                          </button>
+                        )}
+                        {order.status === 'Processing' && (
+                          <>
+                            {showTrackingInput[order.orderId] ? (
+                              <div className="input-group input-group-sm">
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="Enter Tracking ID"
+                                  value={trackingId[order.orderId] || ''}
+                                  onChange={(e) => setTrackingId(prev => ({ ...prev, [order.orderId]: e.target.value }))}
+                                />
+                                <button
+                                  className="btn btn-primary d-flex align-items-center"
+                                  onClick={() => updateStatus(order.orderId, 'Shipped')}
+                                  disabled={loading[order.orderId] === 'Shipped'}
+                                >
+                                  {loading[order.orderId] === 'Shipped' ? (
+                                    <>
+                                      <Spinner
+                                        as="span"
+                                        animation="border"
+                                        size="sm"
+                                        role="status"
+                                        aria-hidden="true"
+                                        className="me-2"
+                                      />
+                                      Submitting...
+                                    </>
+                                  ) : (
+                                    'Submit'
+                                  )}
+                                </button>
+                                <button
+                                  className="btn btn-secondary"
+                                  onClick={() => toggleTrackingInput(order.orderId)}
+                                  disabled={loading[order.orderId] === 'Shipped'}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                className="btn btn-primary"
+                                onClick={() => toggleTrackingInput(order.orderId)}
+                                disabled={loading[order.orderId]}
+                              >
+                                Ship
+                              </button>
+                            )}
+                          </>
+                        )}
+                        {order.status === 'Shipped' && (
+                          <button
+                            className="btn btn-primary d-flex align-items-center"
+                            onClick={() => updateStatus(order.orderId, 'Delivered')}
+                            disabled={loading[order.orderId] === 'Delivered'}
+                          >
+                            {loading[order.orderId] === 'Delivered' ? (
+                              <>
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                  role="status"
+                                  aria-hidden="true"
+                                  className="me-2"
+                                />
+                                Delivering...
+                              </>
+                            ) : (
+                              'Deliver'
+                            )}
+                          </button>
+                        )}
+                        {order.status === 'Delivered' && (
+                          <button
+                            className="btn btn-success d-flex align-items-center"
+                            onClick={() => completeOrder(order.orderId)}
+                            disabled={loading[order.orderId] === 'Complete'}
+                          >
+                            {loading[order.orderId] === 'Complete' ? (
+                              <>
+                                <Spinner
+                                  as="span"
+                                  animation="border"
+                                  size="sm"
+                                  role="status"
+                                  aria-hidden="true"
+                                  className="me-2"
+                                />
+                                Completing...
+                              </>
+                            ) : (
+                              'Order Complete'
+                            )}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

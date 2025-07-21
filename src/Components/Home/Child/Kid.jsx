@@ -4,25 +4,65 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Spinner, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
-const KidsClothingGallery = () => {
+const KidsClothingGallery = ({ socket }) => {
   const navigate = useNavigate();
   const [kidsProducts, setKidsProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cart, setCart] = useState({ items: [] });
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products')
-      .then(response => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/products');
         const kidsClothing = response.data
           .filter(p => p.category?.toLowerCase() === 'kids')
           .slice(0, 4);
         setKidsProducts(kidsClothing);
         setLoading(false);
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error fetching kids products:', error);
         setLoading(false);
+      }
+    };
+
+    const fetchCart = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setCart({ items: [] });
+        return;
+      }
+      try {
+        const res = await axios.get('http://localhost:5000/api/products/cart', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCart(res.data.cart || { items: [] });
+      } catch (err) {
+        console.error('Error fetching cart:', err.response?.data || err.message);
+        setCart({ items: [] });
+      }
+    };
+
+    fetchProducts();
+    fetchCart();
+
+    const userId = localStorage.getItem('userId');
+    if (userId && socket) {
+      socket.on('cartUpdate', (updatedCart) => {
+        console.log('Received cart update via Socket.IO:', updatedCart);
+        setCart(updatedCart || { items: [] });
       });
-  }, []);
+      socket.on('connect_error', (err) => {
+        console.error('Socket.IO connection error:', err.message);
+      });
+    }
+
+    return () => {
+      if (userId && socket) {
+        socket.off('cartUpdate');
+        socket.off('connect_error');
+      }
+    };
+  }, [socket]);
 
   const handleAddToCart = async (productId) => {
     const token = localStorage.getItem('token');
@@ -88,7 +128,6 @@ const KidsClothingGallery = () => {
                       {item.discountPercentage > 0 && (
                         <Card.Text className="text-success">{item.discountPercentage}% Off</Card.Text>
                       )}
-                      {/* <Card.Text>Reviews: {item.reviewCount || 0}</Card.Text> */}
                     </div>
                     <Button
                       variant="dark"
