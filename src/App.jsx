@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import { AuthProvider } from './Components/Home/AuthContext';
 import Signup from './Components/Home/Navbar/child/Signup';
 import Home from './Components/Home/Home';

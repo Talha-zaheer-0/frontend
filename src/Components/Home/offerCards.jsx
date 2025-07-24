@@ -20,7 +20,7 @@ const cards = [
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ac dictum.",
     button: "CHECK OUT",
     image: "/images/shoes.jpg",
-    link: "/shoes",
+    link: "/cart",
   },
 ];
 

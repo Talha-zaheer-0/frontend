@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeftCircle, ChevronRightCircle } from 'lucide-react';
 import axios from 'axios';
 import { Card, Spinner } from 'react-bootstrap';
 import styles from './FeaturedProduct.module.css';
@@ -108,7 +109,7 @@ function FeaturedProduct() {
                 disabled={currentIndex === 0}
                 aria-label="Previous slide"
               >
-                <i className="bi bi-arrow-left-circle-fill"></i>
+                <ChevronLeftCircle size={34} />
               </button>
               <div className={styles.carousel} ref={carouselRef}>
                 <div className={styles.carouselRow}>
@@ -155,7 +156,7 @@ function FeaturedProduct() {
                 disabled={currentIndex >= products.length - 4}
                 aria-label="Next slide"
               >
-                <i className="bi bi-arrow-right-circle-fill"></i>
+                <ChevronRightCircle size={34} />
               </button>
             </>
           )}

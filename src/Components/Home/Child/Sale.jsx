@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Spinner } from 'react-bootstrap';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import styles from './Sale.module.css';
 
 const FALLBACK_IMAGE = 'https://via.placeholder.com/835x350?text=No+Image';
@@ -28,11 +29,9 @@ function Sale() {
           image: product.images?.[0] || FALLBACK_IMAGE,
           discountPercentage: product.discountPercentage || 0,
         }));
-        console.log('Sale Products:', productsData.length); // Debug log
         setProducts(productsData);
         setLoading(false);
       } catch (err) {
-        console.error('❌ Fetch Sale Products Error:', err.response?.data || err.message);
         setMessage(err.response?.data?.message || '❌ Failed to fetch sale products.');
         setLoading(false);
       }
@@ -45,54 +44,54 @@ function Sale() {
     if (products.length > 1 && carouselRef.current) {
       autoScrollRef.current = setInterval(() => {
         setCurrentIndex(prev => {
-          const nextIndex = prev + 1;
-          const newIndex = nextIndex >= products.length ? 0 : nextIndex;
-          const card = carouselRef.current.querySelector(`.${styles.carouselItem}`);
-          if (card) {
-            const cardWidth = card.offsetWidth + 30; // Include gutter
-            carouselRef.current.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
-          }
+          const newIndex = (prev + 1) % products.length;
+          scrollToIndex(newIndex);
           return newIndex;
         });
-      }, 2000); // Auto-scroll every 2 seconds
+      }, 2000);
     }
 
-    return () => clearInterval(autoScrollRef.current); // Cleanup on unmount
+    return () => clearInterval(autoScrollRef.current);
   }, [products]);
 
-  const handleDotClick = (index) => {
-    if (carouselRef.current) {
-      clearInterval(autoScrollRef.current); // Pause auto-scroll
-      setCurrentIndex(index);
-      const card = carouselRef.current.querySelector(`.${styles.carouselItem}`);
-      if (card) {
-        const cardWidth = card.offsetWidth + 30; // Include gutter
-        carouselRef.current.scrollTo({ left: index * cardWidth, behavior: 'smooth' });
-      }
-      if (products.length > 1) {
-        autoScrollRef.current = setInterval(() => {
-          setCurrentIndex(prev => {
-            const nextIndex = prev + 1;
-            const newIndex = nextIndex >= products.length ? 0 : nextIndex;
-            const cardInner = carouselRef.current.querySelector(`.${styles.carouselItem}`);
-            if (cardInner) {
-              const cardWidthInner = cardInner.offsetWidth + 30;
-              carouselRef.current.scrollTo({ left: newIndex * cardWidthInner, behavior: 'smooth' });
-            }
-            return newIndex;
-          });
-        }, 2000); // Restart auto-scroll
-      }
+  const scrollToIndex = (index) => {
+    const card = carouselRef.current?.querySelector(`.${styles.carouselItem}`);
+    if (card && carouselRef.current) {
+      const cardWidth = card.offsetWidth + 30;
+      carouselRef.current.scrollTo({ left: index * cardWidth, behavior: 'smooth' });
     }
+  };
+
+  const handleDotClick = (index) => {
+    clearInterval(autoScrollRef.current);
+    setCurrentIndex(index);
+    scrollToIndex(index);
+  };
+
+  const handleLeftClick = () => {
+    clearInterval(autoScrollRef.current);
+    setCurrentIndex(prev => {
+      const newIndex = prev === 0 ? products.length - 1 : prev - 1;
+      scrollToIndex(newIndex);
+      return newIndex;
+    });
+  };
+
+  const handleRightClick = () => {
+    clearInterval(autoScrollRef.current);
+    setCurrentIndex(prev => {
+      const newIndex = (prev + 1) % products.length;
+      scrollToIndex(newIndex);
+      return newIndex;
+    });
   };
 
   return (
     <div className="container py-4">
-      <h2 className=" mb-4">
-        <span className="text-muted"><strong>Product on Sale</strong></span>   
-      </h2> 
-      <p className=" text-muted">Grab It Now 
-      </p>
+      <h2 className="mb-4">
+        <span className="text-muted"><strong>Product on Sale</strong></span>
+      </h2>
+      <p className="text-muted">Grab It Now</p>
 
       {loading ? (
         <div className="text-center my-5">
@@ -105,30 +104,40 @@ function Sale() {
             <div className="text-center text-muted">No sale products found.</div>
           ) : (
             <>
-              <div className={styles.carousel} ref={carouselRef}>
-                <div className={styles.carouselRow}>
-                  {products.map((item, index) => (
-                    <div
-                      key={item.id || index}
-                      className={`${styles.carouselItem} ${index === currentIndex ? styles.active : ''}`}
-                      onClick={() => navigate(`/product/${item.id}`)}
-                    >
-                      <img
-                        src={item.image}
-                        alt="Sale Product"
-                        className={styles.carouselImage}
-                        onError={(e) => {
-                          console.error(`Failed to load image:`, item.image);
-                          e.target.src = FALLBACK_IMAGE;
-                        }}
-                      />
-                      <div className={styles.discountOverlay}>
-                        {item.discountPercentage}% OFF
+              <div className={styles.carouselWrapper}>
+                <button className={styles.arrowLeft} onClick={handleLeftClick}>
+                  <FaChevronLeft />
+                </button>
+
+                <div className={styles.carousel} ref={carouselRef}>
+                  <div className={styles.carouselRow}>
+                    {products.map((item, index) => (
+                      <div
+                        key={item.id || index}
+                        className={`${styles.carouselItem} ${index === currentIndex ? styles.active : ''}`}
+                        onClick={() => navigate(`/product/${item.id}`)}
+                      >
+                        <img
+                          src={item.image}
+                          alt="Sale Product"
+                          className={styles.carouselImage}
+                          onError={(e) => {
+                            e.target.src = FALLBACK_IMAGE;
+                          }}
+                        />
+                        <div className={styles.discountOverlay}>
+                          {item.discountPercentage}% OFF
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+
+                <button className={styles.arrowRight} onClick={handleRightClick}>
+                  <FaChevronRight />
+                </button>
               </div>
+
               <div className={styles.carouselIndicators}>
                 {products.map((_, index) => (
                   <button

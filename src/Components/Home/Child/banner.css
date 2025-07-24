@@ -1,29 +1,45 @@
-.bannerMain{
-     background-image: url('../../../../assets//banner//girl.png.jpg');
-     background-attachment: fixed;
-     background-position: center;
-     background-size: cover;
-     height: 80vh;
-     top: 0 !important;
-     left: 0;
-     width: 100%;
-     position: relative;
-     z-index: -1 !important;
+.bannerMain {
+  background-image: url('../../../../assets//banner//girl.png.jpg');
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  height: 80vh;
+  top: 0 !important;
+  left: 0;
+  width: 100%;
+  position: relative;
+  z-index: 10 !important; /* Increased to ensure banner is above other elements */
+  display: flex; /* Ensure flex properties are applied */
+  align-items: center; /* Center vertically */
+  justify-content: flex-start; /* Keep left alignment */
 }
-.text1{
-  z-index: 999 !important;
+
+.text1 {
+  z-index: 20 !important; /* Increased to stay above overlay */
   color: white !important;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Enhance readability */
 }
-.darkkkk{
-     background-color: black;
-     height: 100%;
-     width: 100%;
-     opacity: 0.4;
-     /* z-index: 1; */
+
+.darkkkk {
+  background-color: black;
+  height: 100%;
+  width: 100%;
+  opacity: 0.35;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10 !important; /* Behind content */
 }
-.cont{
-     z-index: 5;
+
+
+.cont {
+  z-index: 20 !important; /* Above overlay */
+  padding: 2rem; /* Consistent padding */
+  max-width: 600px; /* Keep for content width */
+  width: 90%; /* More flexible width */
+  margin: 0 2rem; /* Center with margin on both sides */
 }
+
 .shopBtn {
   margin-top: 20px;
   padding: 12px 32px;
@@ -35,13 +51,42 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: all 0.3s ease;
+  z-index: 25 !important; /* Above all banner elements */
+  text-decoration: none; /* No underline for Link */
+  display: inline-block; /* Behave like a button */
 }
-.banner1{ 
- background-size: fill !important; 
+
+.banner1 {
+  background-size: cover !important; /* Consistent with bannerMain */
 }
 
 .shopBtn:hover {
   background: linear-gradient(90deg, #fda085, #f6d365); /* Reverse gradient */
   transform: scale(1.05);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.bannerMain h1 {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Enhance title readability */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .cont {
+    padding: 1rem;
+    margin: 0 1rem;
+    max-width: 95%; /* More flexible on mobile */
+  }
+
+  .text1 {
+    font-size: 1rem; /* Smaller paragraph text */
+  }
+
+  .shopBtn {
+    padding: 10px 24px; /* Smaller button */
+  }
+
+  .bannerMain h1 {
+    font-size: 2.5rem; /* Smaller title on mobile */
+  }
 }

@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Card, Button, Spinner } from 'react-bootstrap';
 import styles from './HotProduct.module.css'; 
+import { ChevronLeftCircle, ChevronRightCircle } from 'lucide-react';
 import Notification from '../Notification'; // Assuming Notification is in the same directory or adjust the path
-
 const FALLBACK_IMAGE = 'https://via.placeholder.com/250x250?text=No+Image';
 
 function HotProduct() {
@@ -110,14 +110,15 @@ function HotProduct() {
             <div className="text-center text-muted">No hot products found.</div>
           ) : (
             <>
-              <Button
-                variant="outline-dark"
+            <button
                 className={`${styles.carouselButton} ${styles.carouselButtonLeft}`}
                 onClick={scrollLeft}
                 disabled={currentIndex === 0}
-              >
-                {"<"}
-              </Button>
+                aria-label="Previous slide"
+            >
+                <ChevronLeftCircle size={34} />
+            </button>
+
               <div className={styles.carousel} ref={carouselRef}>
                 <div className={styles.carouselRow}>
                   {products.map((item, index) => (
@@ -165,14 +166,15 @@ function HotProduct() {
                   ))}
                 </div>
               </div>
-              <Button
-                variant="outline-dark"
+              <button
                 className={`${styles.carouselButton} ${styles.carouselButtonRight}`}
                 onClick={scrollRight}
                 disabled={currentIndex >= products.length - 4}
+                aria-label="Next slide"
               >
-                {">"}
-              </Button>
+                <ChevronRightCircle size={34} />
+              </button>
+
             </>
           )}
         </div>

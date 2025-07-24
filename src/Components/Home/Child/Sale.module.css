@@ -100,6 +100,46 @@
   height: 20px; /* Slightly larger on hover */
 }
 
+.carouselWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arrowLeft,
+.arrowRight {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 5%;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10;
+  padding: 8px;
+  transition: background-color 0.3s;
+}
+
+.arrowLeft:hover,
+.arrowRight:hover {
+  /* background-color: rgba(88, 88, 88, 0.6); */
+  color:  rgb(253, 9, 9);
+  font-size: 1.8rem;
+}
+
+.arrowLeft {
+  left: -11px;
+}
+
+.arrowRight {
+  right: -15px;
+}
+
+
+
+
 /* Pulsing animation for discount badge */
 @keyframes pulse {
   0% {
